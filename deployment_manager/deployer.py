@@ -9,6 +9,7 @@ import uuid
 from azure.storage.blob import BlobServiceClient
 import zipfile
 import io
+import subprocess
 
 from mockdata import produce
 
@@ -30,8 +31,7 @@ def download_zip(container, zip_file_name):
     blob_client.download_blob().download_to_stream(blob_data)
 
     with zipfile.ZipFile(blob_data) as zip_file:
-        for file_name in zip_file.namelist() :
-            zip_file.extract(file_name)
+        zip_file.extractall("../"+container)
 
 def generate_docker(fp,service, sensor_topic, controller_topic):
     df = open(fp+'/Dockerfile', 'w')
@@ -74,8 +74,8 @@ def req_handler(app):
         if not found:
             return flask.jsonify({"status":"bhag bsdk"})
         # 2 fetch code artifacts
-        download_zip(req['user'].lower(),req['appname']+".zip")
-        file_path = '../'+req['user']+'/'+req['appname']
+        # download_zip(req['user'].lower(),req['appname']+".zip")
+        file_path = '../'+req['user'].lower()+'/'+req['appname']
         with open(file_path+'/config.json') as f:
             configs = json.load(f)
         
@@ -89,20 +89,26 @@ def req_handler(app):
         fp = "runtime_"+req["appname"]+"_"+str(uuid.uuid1())
         os.mkdir(fp)
         #'" + fp +"'
-        # print('docker build -t '+req["appname"]+':latest ' + file_path +'/')
-        # out=os.system('docker build -t '+req["appname"]+':latest ' + file_path +'/')
-        # # print("Build result: ",out)
-        # if out!=0:
-        #     return flask.jsonify({"status":"failed build due to invalid configs"})
+        print('docker build -t '+req["appname"]+':latest ' + file_path +'/')
+        out=os.system('docker build -t '+req["appname"]+':latest ' + file_path +'/')
+        # print("Build result: ",out)
+        if out!=0:
+            return flask.jsonify({"status":"failed build due to invalid configs"})
         if found["usertype"] == 'admin': 
             container_name = req["appname"]
         else:
             return flask.jsonify({"status":"Invalid user"})
-        # print("docker run -d --network='host' -v ${HOME}:/home --name="+container_name+" "+req["appname"])
+        
         os.system("docker rm " + container_name)
         
-        out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+req["appname"])
-        print(out)
+        # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+req["appname"])   
+
+        # execute the command and capture its output
+        # result = subprocess.run("docker run -d -v runtime_special:/home --name=special special", stdout=subprocess.PIPE, shell=True)
+        result = subprocess.run("docker run -d -v "+fp+":/home --name=" +container_name +' '+req["appname"], stdout=subprocess.PIPE, shell=True)
+        # decode the output and print it
+        output = result.stdout.decode()
+        print("Docker run status ",output)
 
         # # # print(stdout.readlines())
         # _,stdout,stderr=os.system("docker ps -aqf 'name="+ container_name+"'")
@@ -111,6 +117,10 @@ def req_handler(app):
         # print("Container id",conid)
         return flask.jsonify({"status":"ok","runtime_id":0})
 
+    @app.route('/test', methods=['POST'])
+    def test():
+        print("Json ",flask.request.get_json())
+        return flask.jsonify({"status":"ok","runtime_id":0})
     app.run(host = '0.0.0.0',port = 8888, threaded=True)
 	
 
@@ -118,10 +128,7 @@ def req_handler(app):
 if __name__ == '__main__':
     app = flask.Flask('deploymgr')
     req_handler(app)
-    @app.route('/test', methods=['POST'])
-    def test():
-        print(flask.request.get_json())
-        return flask.jsonify({"status":"ok","runtime_id":0})
+    
     # while True:
         # threading.Thread(target=req_handler,args=(app,)).start()
         # t1.join()
