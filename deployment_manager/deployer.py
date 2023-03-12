@@ -18,7 +18,7 @@ def generateDocker(service, sensor_topic, controller_topic):
     
     dependency = service['dependency']   #other service topics
 
-    baseimage = '''from base_image\n'''
+    baseimage = '''FROM base_image\n'''
     df.write(baseimage)
     df.write('\n')
 
@@ -35,8 +35,8 @@ def generateDocker(service, sensor_topic, controller_topic):
     df.write(file)
     df.write('\n')
 
-    dependency_topics = dependency.join(' ')
-    df.write('ENTRYPOINT python3 -u ' + filename + ' ' + sensor_topic + ' ' + controller_topic + " " + dependency_topics)
+    dependency_topics = (' ').join(dependency)
+    df.write('ENTRYPOINT python3 -u ' + filename + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) + " " + dependency_topics)
     df.close()
 
 def req_handler(app):
@@ -61,19 +61,11 @@ def req_handler(app):
             threading.Thread(target=produce, args=(k,v,)).start()
 
         # 4 build and deploy
-        fp = "runtime_"+req["appname"]+"_"+uuid.uuid1()
+        fp = "runtime_"+req["appname"]+"_"+str(uuid.uuid1())
         os.mkdir(fp)
         
-        image_name = req["appname"]
         print('echo root | sudo -S docker build -t ' + req["appname"] + " '" + fp +"'")
-        # stdin,stdout,stderr=os.system('echo root | sudo -S docker build -t ' + image_name + " '" + serviceid +"'")
-        # checkforError(stdout,stderr)
-        # print(stderr.readlines())
-        if found.usertype == 'admin': 
-            container_name = req["appname"]
-        else:
-            return flask.jsonify({"status":"GO AWAY"})
-        _,stdout,stderr=os.system("echo root | sudo -S docker rm " + container_name)
+        stdin,stdout,stderr=os.system('echo root | sudo -S docker build -t ' + req["appname"] + " '" + fp +"'")
         lines = stdout.readlines()
         if len(lines) != 0:
             print(lines[0])
@@ -81,6 +73,12 @@ def req_handler(app):
         if len(lines) != 0:
             print("Error")
             print(lines[0])
+        if found.usertype == 'admin': 
+            container_name = req["appname"]
+        else:
+            return flask.jsonify({"status":"GO AWAY"})
+        _,stdout,stderr=os.system("echo root | sudo -S docker rm " + container_name)
+        
         # stdin,stdout,stderr=os.system("echo root | sudo -S docker run -d --network='host' -v ${HOME}:/home --name=" +container_name +' '+image_name)
 
         # # print(stdout.readlines())

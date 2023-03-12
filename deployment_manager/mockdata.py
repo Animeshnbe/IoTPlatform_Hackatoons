@@ -23,7 +23,7 @@ producer = KafkaProducer(
 #         sleep(1)
 
 def produce(sensor,rate):
-    df = pd.read_csv(sensor+".csv")
+    df = pd.read_csv("../data/"+sensor+".csv")
 
     for _,row in df.iterrows():
         producer.send(sensor, value=row.to_dict())
