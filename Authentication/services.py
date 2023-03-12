@@ -2,6 +2,7 @@ from flask import request, Blueprint, render_template, redirect, url_for, flash
 import authentication
 from werkzeug.utils import secure_filename
 import os
+from azure.storage.blob import BlobServiceClient
 
 services = Blueprint("services", __name__)
 
@@ -86,14 +87,13 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             print("filename ", filename)
-            file.save(os.path.join("./ShoppingCart-main", filename))
+            connect_str = "DefaultEndpointsProtocol=https;AccountName=aman0ias;AccountKey=ejuMHDXoYsp4ktNpndJTqrC0QXgEi7DCv0cJiK94R6ZhMYZa+VmKnYcTNv3T6qIc/qoYnnZbGZPg+AStGotFJA==;EndpointSuffix=core.windows.net"
+            blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+            container_name = "zipstorage"
+            container_client = blob_service_client.get_container_client(container_name)
+            file_path = "/home/priyanshu/Documents/IoTPlatform_Hackatoons-team2/Authentication/" + filename
+            file_name = os.path.basename(file_path)
+            blob_client = container_client.get_blob_client(blob=file_name)
+            with open(file_path, "rb") as data:
+                blob_client.upload_blob(data)
             return render_template('signup.html')
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    '''
