@@ -19,12 +19,14 @@ def authenticate():
                 response = dict()
                 response['status'] = "OK"
                 response['message'] = loginresponse
+                if loginresponse:
+                    return render_template('/dashboard')
                 return render_template('signup.html')
                 # return f"<h1>{username}</h1>"
             except Exception as e:
                 raise Exception(str(e))
         else:
-            return render_template('dashboard.html')
+            return render_template('login.html')
 
     except Exception as e:
         raise Exception(str(e))

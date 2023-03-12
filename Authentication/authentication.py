@@ -1,6 +1,7 @@
 from flask import request, Blueprint
 from mongo_utility import MongoUtility
 # from db_conn import DBConnection
+import bcrypt
 import json
 
 projects = Blueprint("authentication", __name__)
@@ -10,18 +11,30 @@ mongo_username = "root"
 mongo_password = "dQFdN+kPl+I+hLKQEivugHTuzjgpERepxmUt6qMu3I51Kjljv9qGTeMgobr724dg"
 
 
+def get_hashed_password(plain_text_password):
+    # Hash a password for the first time
+    #   (Using bcrypt, the salt is saved into the hash itself)
+    return bcrypt.hashpw(plain_text_password, bcrypt.gensalt(12))
+
+
+def check_password(plain_text_password, hashed_password):
+    # Check hashed password. Using bcrypt, the salt is saved into the hash itself
+    return bcrypt.checkpw(plain_text_password, hashed_password)
+
+
 def login(username, password):
     try:
         user_authenticated = False
         # username = input_json["username"]
         # password = input_json["password"]
+        password = password.encode('utf-8')
         user_json = {"username": username}
         mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
         user_record = mongo_utility.find_json(user_json, "iot", "users")
         print("user_record : ", user_record)
-        print("user_record[0]: ",user_record[0])
+        print("user_record[0]: ", user_record[0])
         fetched_user_password = user_record[0].get("password", "")
-        if fetched_user_password == password:
+        if check_password(password, fetched_user_password):
             user_authenticated = True
         print("fetched_user_id : ", user_authenticated)
 
@@ -31,9 +44,13 @@ def login(username, password):
         print("Error while getting POST request : ", e)
 
 
+
 def sign_up_user(input_json):
     try:
         user_added = False
+        print("input_json : ", input_json)
+        # password.encode('utf-8')
+        input_json["password"] = get_hashed_password(input_json["password"].encode('utf-8'))
         mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
         user_data = mongo_utility.insert_one(input_json, "iot", "users")
         if user_data:
@@ -42,7 +59,6 @@ def sign_up_user(input_json):
 
     except Exception as e:
         print("Error while getting POST request : ", e)
-
 
 # @projects.route("/database_multi_insert", methods=["POST"])
 # def multi_insert_data_service():
