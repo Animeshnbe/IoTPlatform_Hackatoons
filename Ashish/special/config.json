@@ -1,0 +1,4 @@
+{
+    "sensors": {"thermometer":5,"air_quality":2,"pressure":3},
+    "controllers": ["ac","gate opener"]
+}
