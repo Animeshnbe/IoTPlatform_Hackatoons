@@ -1,11 +1,11 @@
 from flask import Flask
 from flask_cors import CORS
-import services
+import monitorServices
 import threading
 from monitor import fetch_nodes_status
 
 app = Flask(__name__)
-app.register_blueprint(services.monitor)
+app.register_blueprint(monitorServices.monitorPrint)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
