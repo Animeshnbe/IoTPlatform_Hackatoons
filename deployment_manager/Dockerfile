@@ -1,12 +1,9 @@
-from base_image
+FROM base_image
 
 RUN pip3 install flask
-RUN pip3 install n ; exit 0
-RUN pip3 install u ; exit 0
-RUN pip3 install m ; exit 0
-RUN pip3 install p ; exit 0
-RUN pip3 install y ; exit 0
+RUN pip3 install numpy ; exit 0
+RUN pip3 install uuid ; exit 0
 
-ADD special .
+ADD kafka_expt.py .
 
-ENTRYPOINT python3 -u special thermometer air_quality pressure ac gate opener 
+ENTRYPOINT python3 -u kafka_expt.py thermometer air_quality pressure ac gate_opener 

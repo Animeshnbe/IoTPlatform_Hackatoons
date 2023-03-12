@@ -1,4 +1,6 @@
 {
+    "filename":"kafka_expt.py",
+    "requirements":["numpy","uuid"],
     "sensors": {"thermometer":5,"air_quality":2,"pressure":3},
     "controllers": ["ac","gate_opener"]
 }

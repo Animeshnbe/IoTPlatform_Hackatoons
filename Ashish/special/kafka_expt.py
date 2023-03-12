@@ -4,7 +4,7 @@ from kafka import KafkaAdminClient, KafkaProducer, KafkaConsumer
 from kafka.admin import NewTopic
 from kafka.errors import TopicAlreadyExistsError, KafkaError
 import json
-
+import sys
 
 def create_topic(name,part=1):
     admin = KafkaAdminClient(bootstrap_servers="localhost:9092")
@@ -22,8 +22,8 @@ def on_success(metadata):
 def on_error(e):
     print(f"Error sending message: {e}")
 
-def produce(is_async=True):  
-    producer = KafkaProducer(bootstrap_servers=" 10.2.132.235:9092")
+def produce(topic,is_async=True):  
+    producer = KafkaProducer(bootstrap_servers="localhost:19092")
     hostname = str.encode(socket.gethostname())
 
     # # Produce asynchronously
@@ -41,7 +41,7 @@ def produce(is_async=True):
         for i in range(100, 200):
             msg = f"message with callbacks #{i}"
             future = producer.send(
-                "demo",
+                topic,
                 key=hostname,
                 value=str.encode(msg)
             )
@@ -83,4 +83,9 @@ def new_consumer(name):
         print(f"{topic_info}, {message_info}")
         print(data["timestamp"])
 
-new_consumer('ac_service')
+
+for i in range(1,4):
+    first = sys.argv[i]
+    new_consumer(first)
+
+produce(sys.argv[4])

@@ -54,7 +54,7 @@ def req_handler(app):
         with open(file_path) as f:
             configs = json.load(f)
         
-        generateDocker({"requirements":"numpy","dependency":req["services"],"filename":req["appname"]},configs["sensors"].keys(),configs["controllers"])
+        generateDocker({"requirements":configs["requirements"],"dependency":req["services"],"filename":configs["filename"]},configs["sensors"].keys(),configs["controllers"])
         # 3 sensor binding
         # TBD by sensor manager after integration
         for k,v in configs["sensors"].items():
@@ -64,8 +64,8 @@ def req_handler(app):
         fp = "runtime_"+req["appname"]+"_"+str(uuid.uuid1())
         os.mkdir(fp)
         
-        print('echo root | sudo -S docker build -t ' + req["appname"] + " '" + fp +"'")
-        stdin,stdout,stderr=os.system('echo root | sudo -S docker build -t ' + req["appname"] + " '" + fp +"'")
+        print('docker build -t ' + req["appname"] + " '" + fp +"'")
+        stdin,stdout,stderr=os.system('docker build -t ' + req["appname"] + " '" + fp +"'")
         lines = stdout.readlines()
         if len(lines) != 0:
             print(lines[0])
@@ -77,9 +77,9 @@ def req_handler(app):
             container_name = req["appname"]
         else:
             return flask.jsonify({"status":"GO AWAY"})
-        _,stdout,stderr=os.system("echo root | sudo -S docker rm " + container_name)
+        _,stdout,stderr=os.system("docker rm " + container_name)
         
-        # stdin,stdout,stderr=os.system("echo root | sudo -S docker run -d --network='host' -v ${HOME}:/home --name=" +container_name +' '+image_name)
+        stdin,stdout,stderr=os.system("docker run -d --network='host' -v ${HOME}:/home --name=" +container_name +' '+req["appname"])
 
         # # print(stdout.readlines())
         # stdin,stdout,stderr=os.system("echo root | sudo -S docker ps -aqf 'name="+ container_name+"'")
