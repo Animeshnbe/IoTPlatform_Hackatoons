@@ -7,7 +7,7 @@ import json
 import sys
 
 def create_topic(name,part=1):
-    admin = KafkaAdminClient(bootstrap_servers="localhost:9092")
+    admin = KafkaAdminClient(bootstrap_servers="localhost:19092")
     try:
         demo_topic = NewTopic(name=name, num_partitions=part, replication_factor=1)
         admin.create_topics(new_topics=[demo_topic])
