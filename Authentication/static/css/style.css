@@ -1,0 +1,20 @@
+body {
+    background-color: darkslategray;
+
+}
+.card {
+    margin-top: 20%;
+}
+.btn
+{
+    background-color: darkslategray;
+    color: white;
+    width: 100%;
+}
+.heading {
+    display: flex;
+    justify-content: center;
+}
+.card1 {
+    margin-top: 10%;
+}
