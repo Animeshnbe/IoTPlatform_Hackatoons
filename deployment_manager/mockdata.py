@@ -1,11 +1,30 @@
 import numpy as np
 import pandas as pd
+import csv
+import random
+import json
+from time import sleep,time
+from kafka import KafkaProducer
 
-# RANDOM TIME DATA
-date_rng = pd.date_range(start='1/1/2021', end='1/2/2021', freq='s')
-df = pd.DataFrame(date_rng, columns=['timestamp'])
+producer = KafkaProducer(
+    bootstrap_servers=['localhost:19092'],
+    value_serializer=lambda m: json.dumps(m).encode('ascii'))
 
-np.random.seed(42)
-df['value'] = np.random.randint(0, 100, size=(len(date_rng)))
-df = df.sample(frac=0.5, random_state=42).sort_values(by=['timestamp'])
-df.to_csv('data.csv', index=False)
+# def produce(sensor,rate):
+#     bootstrap_servers = ['localhost:19092']  # replace with your broker address
+#     topic_name = 'ac_service'
+
+#     while True:
+#         data = {
+#             'timestamp': int(time()),
+#             'value': random.uniform(0, 100)
+#         }
+#         producer.send(topic_name, value=data)
+#         sleep(1)
+
+def produce(sensor,rate):
+    df = pd.read_csv("../data/"+sensor+".csv")
+
+    for _,row in df.iterrows():
+        producer.send(sensor, value=row.to_dict())
+        sleep(rate)

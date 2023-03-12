@@ -6,6 +6,7 @@ import os
 import pymongo
 import paramiko
 import uuid
+from mockdata import produce
 
 client = pymongo.MongoClient("localhost",27017)
 db = client['IAS']
@@ -17,7 +18,7 @@ def generateDocker(service, sensor_topic, controller_topic):
     
     dependency = service['dependency']   #other service topics
 
-    baseimage = '''from base_image\n'''
+    baseimage = '''FROM base_image\n'''
     df.write(baseimage)
     df.write('\n')
 
@@ -34,8 +35,8 @@ def generateDocker(service, sensor_topic, controller_topic):
     df.write(file)
     df.write('\n')
 
-    dependency_topics = dependency.join(' ')
-    df.write('ENTRYPOINT python3 -u ' + filename + ' ' + sensor_topic + ' ' + controller_topic + " " + dependency_topics)
+    dependency_topics = (' ').join(dependency)
+    df.write('ENTRYPOINT python3 -u ' + filename + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) + " " + dependency_topics)
     df.close()
 
 def req_handler(app):
@@ -53,36 +54,40 @@ def req_handler(app):
         with open(file_path) as f:
             configs = json.load(f)
         
-        generateDocker({"requirements":"numpy","dependency":req["services"],"filename":req["appname"]},configs["sensors"].keys(),configs["controllers"])
+        generateDocker({"requirements":configs["requirements"],"dependency":req["services"],"filename":configs["filename"]},configs["sensors"].keys(),configs["controllers"])
         # 3 sensor binding
-        config
+        # TBD by sensor manager after integration
+        for k,v in configs["sensors"].items():
+            threading.Thread(target=produce, args=(k,v,)).start()
 
         # 4 build and deploy
-        os.mkdir("runtime_"+uuid.uuid1())
+        fp = "runtime_"+req["appname"]+"_"+str(uuid.uuid1())
+        os.mkdir(fp)
         
-        
-
- 
-        image_name = servicename
-        print('echo root | sudo -S docker build -t ' + image_name + " '" + serviceid +"'")
-        stdin,stdout,stderr=os.system('echo root | sudo -S docker build -t ' + image_name + " '" + serviceid +"'")
-        checkforError(stdout,stderr)
-        print(stderr.readlines())
-        if username == 'admin': 
-            container_name = servicename
-        else:
-            container_name= serviceid
-        stdin,stdout,stderr=os.system("echo root | sudo -S docker rm " + container_name)
-        checkforError(stdout,stderr)
-        stdin,stdout,stderr=os.system("echo root | sudo -S docker run -d --network='host' -v ${HOME}:/home --name=" +container_name +' '+image_name)
-        checkforError(stdout,stderr)
-        # print(stdout.readlines())
-        stdin,stdout,stderr=os.system("echo root | sudo -S docker ps -aqf 'name="+ container_name+"'")
-        print("Contaier id is ")
+        print('docker build -t ' + req["appname"] + " '" + fp +"'")
+        stdin,stdout,stderr=os.system('docker build -t ' + req["appname"] + " '" + fp +"'")
         lines = stdout.readlines()
-        conid = lines[0]
-        print(conid)
-        return flask.jsonify({"status":"ok","runtime_id":conid})
+        if len(lines) != 0:
+            print(lines[0])
+        lines = stderr.readlines()
+        if len(lines) != 0:
+            print("Error")
+            print(lines[0])
+        if found.usertype == 'admin': 
+            container_name = req["appname"]
+        else:
+            return flask.jsonify({"status":"GO AWAY"})
+        _,stdout,stderr=os.system("docker rm " + container_name)
+        
+        stdin,stdout,stderr=os.system("docker run -d --network='host' -v ${HOME}:/home --name=" +container_name +' '+req["appname"])
+
+        # # print(stdout.readlines())
+        # stdin,stdout,stderr=os.system("echo root | sudo -S docker ps -aqf 'name="+ container_name+"'")
+        # print("Contaier id is ")
+        # lines = stdout.readlines()
+        # conid = lines[0]
+        # print(conid)
+        return flask.jsonify({"status":"ok","runtime_id":0})
 
     app.run(host = '0.0.0.0',port = 8888)
 	
