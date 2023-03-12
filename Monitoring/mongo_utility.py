@@ -21,6 +21,16 @@ class MongoUtility():
         data = list(doc)
         return data
 
+    def check_document(self, database_name, json_data, collection_name):
+        db = self.__mongo_OBJ__[database_name]
+        mongo_response = db[collection_name].find(json_data)
+        mongo_response = self.mongo_doc_to_json(mongo_response)
+        print("mongo_response :", len(mongo_response))
+        if len(mongo_response) == 0:
+            return False
+        else:
+            return True
+
     def insert_one(self, json_data, database_name, collection_name):
         """
         To insert single document in collection
@@ -91,8 +101,9 @@ class MongoUtility():
             db = self.__mongo_OBJ__[database_name]
             mongo_response = db[collection_name].find()
             print("find : --> ", mongo_response)
+            data = self.mongo_doc_to_json(mongo_response)
             print("Fetched results from mongo")
-            return mongo_response
+            return data
         except Exception as e:
             print("Error in finding document: " + str(e))
             raise Exception(e)
