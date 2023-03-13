@@ -105,17 +105,24 @@ def req_handler(app):
 
         # execute the command and capture its output
         # result = subprocess.run("docker run -d -v runtime_special:/home --name=special special", stdout=subprocess.PIPE, shell=True)
-        result = subprocess.run("docker run -d -v "+fp+":/home --name=" +container_name +' '+req["appname"], stdout=subprocess.PIPE, shell=True)
+        result = subprocess.run("docker run -d --net=host -v "+fp+":/home --name=" +container_name +' '+req["appname"], stdout=subprocess.PIPE, shell=True)
         # decode the output and print it
         output = result.stdout.decode()
         print("Docker run status ",output)
 
-        # # # print(stdout.readlines())
         # _,stdout,stderr=os.system("docker ps -aqf 'name="+ container_name+"'")
-        # lines = stdout.readlines()
-        # conid = lines[0]
-        # print("Container id",conid)
-        return flask.jsonify({"status":"ok","runtime_id":0})
+        result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
+        output = result.stdout.decode()
+        if "runtime" in db.list_collection_names():
+            print("The collection already exists.")
+        else:
+            # Create the collection
+            collection = db.create_collection("runtime")
+        collection = db["runtime"]
+        mydata = {"runtime_id": output, "app": req["appname"]}
+
+        collection.insert_one(mydata)
+        return flask.jsonify({"status":"ok","runtime_id":output})
 
     @app.route('/test', methods=['POST'])
     def test():

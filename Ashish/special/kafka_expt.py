@@ -23,7 +23,7 @@ def on_error(e):
     print(f"Error sending message: {e}")
 
 def produce(topic,is_async=True):  
-    producer = KafkaProducer(bootstrap_servers="localhost:19092")
+    producer = KafkaProducer(bootstrap_servers="host.docker.internal:19092")
     hostname = str.encode(socket.gethostname())
 
     # # Produce asynchronously
@@ -67,7 +67,7 @@ def produce(topic,is_async=True):
 
 def new_consumer(name):
     consumer = KafkaConsumer(
-        bootstrap_servers=["localhost:19092"],
+        bootstrap_servers=["host.docker.internal:19092"],
         auto_offset_reset="earliest",
         enable_auto_commit=True,
         consumer_timeout_ms=1000
