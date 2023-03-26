@@ -1,11 +1,12 @@
 from flask import Flask
 from flask_cors import CORS
-import monitorServices
 import threading
-from monitor import fetch_nodes_status
+import actionModuleServices
+
+# from actionModuleServices import fetch_nodes_status
 
 app = Flask(__name__)
-app.register_blueprint(monitorServices.monitorPrint)
+app.register_blueprint(actionModuleServices.actionPrint)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -16,7 +17,4 @@ def route():
 
 
 if __name__ == '__main__':
-    send_logs_thread = threading.Thread(target=fetch_nodes_status)
-    send_logs_thread.start()
-
-    app.run(host='0.0.0.0', port=9823, debug=True, threaded=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=9825, debug=True, threaded=True, use_reloader=False)
