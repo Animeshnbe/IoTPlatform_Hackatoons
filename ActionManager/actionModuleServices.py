@@ -3,8 +3,10 @@ from werkzeug.utils import secure_filename
 import os
 import kafka
 from actionManagerHandler import action_manager_request_handler
+from notificationUtility import send_email
 
 actionPrint = Blueprint("actionModuleServices", __name__)
+
 
 # kafka_server = 'localhost:9092'
 # topic = 'monitor_nodes'
@@ -23,12 +25,12 @@ def action_manager_request_service():
 
 
 @actionPrint.route("/emailAPI", methods=["POST"])
-def action_manager_request_service():
+def email_API_service():
     if request.method == 'POST':
-        print("Inside GET Request")
+        print("Inside POST Request")
         try:
             input_json = request.get_data()
-            response = action_manager_request_handler(input_json)
+            response = send_email(input_json["subject"], input_json.get("text", ""), input_json.get("email", ""))
             return response
         except Exception as e:
             raise Exception(str(e))
