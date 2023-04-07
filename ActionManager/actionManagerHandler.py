@@ -2,19 +2,46 @@ from kafka import KafkaConsumer
 import json
 import time
 import threading
-import smtplib
 from mongo_utility import MongoUtility
 from bson import json_util
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
+from notificationUtility import send_email
+import configparser
 
-mongo_port = 27017
-mongo_host = "localhost"
-mongo_username = "root"
-mongo_password = "dQFdN+kPl+I+hLKQEivugHTuzjgpERepxmUt6qMu3I51Kjljv9qGTeMgobr724dg"
+# Config file parser
+parser = configparser.RawConfigParser(allow_no_value=True)
+CONFIGURATION_FILE = "settings.conf"
+parser.read([CONFIGURATION_FILE])
 
-kafkaPort = "9092"
-kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
+
+mongo_port = int(parser.get("MONGO", "mongo_port"))
+mongo_host = parser.get("MONGO", "mongo_host")
+
+kafka_port = parser.get("KAFKA", "kafka_port")
+kafka_ip = parser.get("KAFKA", "kafka_ip")
+# kafkaPort = "9092"
+# kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
+kafkaAddress = kafka_ip + ":" + kafka_port
+
+
+def email_handler(to, subject, content):
+    response = {}
+    try:
+        result = send_email(subject, content, to)
+        if result == "Success":
+            response["status"] = "OK"
+            response["message"] = "Message sent successfully"
+            return response
+        else:
+            response["status"] = "Fail"
+            response["message"] = "Message not sent successfully"
+            return response
+    except Exception as e:
+        print(e)
+        response["status"] = "Fail"
+        response["message"] = "Message not sent successfully"
+        return response
 
 
 def send_data_to_sensor(host_topic, message):
@@ -26,37 +53,6 @@ def send_data_to_sensor(host_topic, message):
         producer.send(topic, bytes(message, "utf-8"))
         producer.flush()
         time.sleep(1)
-
-
-## https://myaccount.google.com/u/0/apppasswords
-## https://myaccount.google.com/signinoptions/two-step-verification/enroll-welcome
-def send_email(to, subject, text, receiver_email):
-    gmail_user = 'nikhil.180410107039@gmail.com'
-    gmail_app_password = 'oheowxctqofjxznn'
-
-    sent_from = gmail_user
-    sent_to = [receiver_email]
-    sent_subject = subject
-    sent_body = text
-
-    email_text = """\
-    From: %s
-    To: %s
-    Subject: %s
-
-    %s
-    """ % (sent_from, ", ".join(sent_to), sent_subject, sent_body)
-
-    try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.ehlo()
-        server.login(gmail_user, gmail_app_password)
-        server.sendmail(sent_from, sent_to, email_text)
-        server.close()
-
-        print('Email sent!')
-    except Exception as exception:
-        print("Error: %s!\n\n" % exception)
 
 
 def action_manager_request_handler(input_json):
