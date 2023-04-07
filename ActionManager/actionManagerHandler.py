@@ -8,12 +8,12 @@ from kafka import KafkaProducer
 from kafka import KafkaConsumer
 from notificationUtility import send_email
 import configparser
+from kafkautilities import kafka_consume, kafka_produce
 
 # Config file parser
 parser = configparser.RawConfigParser(allow_no_value=True)
 CONFIGURATION_FILE = "settings.conf"
 parser.read([CONFIGURATION_FILE])
-
 
 mongo_port = int(parser.get("MONGO", "mongo_port"))
 mongo_host = parser.get("MONGO", "mongo_host")
@@ -44,6 +44,21 @@ def email_handler(to, subject, content):
         return response
 
 
+def helper_function(location_id, user_id, device_id, device_type, device_command):
+    try:
+        # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
+        message = dict(location_id=location_id, user_id=user_id, device_id=device_id, device_type=device_type,
+                       device_command=device_command)
+        topic = parser.get("KAFKA", "action_device")
+        # print("kafka_ip : ", kafka_ip)
+        # print("kafka_port : ", kafka_port)
+        # print("topic : ", topic)
+        # print("message : ", message)
+        kafka_produce(kafka_ip, kafka_port, topic, message)
+    except Exception as e:
+        print(e)
+
+
 def send_data_to_sensor(host_topic, message):
     for i in host_topic:
         temp = i.split(' ')
@@ -57,42 +72,15 @@ def send_data_to_sensor(host_topic, message):
 
 def action_manager_request_handler(input_json):
     try:
-        user_id = input_json["username"]
-        service_name = input_json['servicename']
-        application_config_file = input_json['application_config_file']
-        service_id = input_json['service_id']
-        host_topic = input_json['sensor_host']
-
-        config_file_keys = application_config_file['Application']['services'].keys()
-        for keys in config_file_keys:
-            if application_config_file['Application']['services'][keys]['servicename'] == service_name:
-                service_details = application_config_file['Application']['services'][keys]['action']
-                break
-
-        for i in application_config_file:
-            sensor_host = []
-            if i == 'send_output_to_sensor' and application_config_file[i]['value'] != "None":
-                mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-                query_json = {"sensor_name": application_config_file[i]['sensor']}
-                sensor_record = mongo_utility.find_json(query_json, "iot", "sensor")
-                sensor_host.append(
-                    str(sensor_record['sensor_host']['kafka']['kafka_broker_ip']) + " " + str(
-                        sensor_record['sensor_host']['kafka']['kafka_topic']))
-
-                # t = threading.Thread(target=send_data_to_sensor, args=(sensor_host, "message",))
-                # t.start()
-                send_data_to_sensor(sensor_host, "message")
-
-            if i == 'Send_Email' and config_file_keys[i]['From'] != "None":
-                to = application_config_file['Send_Email']['To']
-                subject = application_config_file['Send_Email']['Subject']
-                text = application_config_file['Send_Email']['Text']
-                receiver_email = "amankhandelwaljuly@gmail.com"
-                t = threading.Thread(target=send_email, args=(to, subject, text, receiver_email,))
-                t.start()
-
-            temp = {'ack': 'OK'}
-            return temp
-
+        print(input_json)
+        location_id = input_json.get("location_id", "")
+        user_id = input_json.get("user_id", "")
+        device_id = input_json.get("device_id", "")
+        device_type = input_json.get("device_type", "")
+        device_command = input_json.get("device_command", "")
+        th = threading.Thread(target=helper_function,
+                              args=(location_id, user_id, device_id, device_type, device_command,))
+        th.start()
+        return {"response": "success"}
     except Exception as e:
         print(e)
