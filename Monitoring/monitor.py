@@ -3,20 +3,25 @@ import json
 import time
 from mongo_utility import MongoUtility
 from bson import json_util
+from dotenv import load_dotenv
+import os 
+load_dotenv()  # take environment variables from .env.
+
+# kafkaPort1 = "9092"
+# kafkaPort = "9092"
+kafkaPort1 = os.getenv("kafkaPort")
+kafkaPort = os.getenv("kafkaPort")
 
 
-kafkaPort1 = "9092"
-kafkaPort = "9092"
+kafkaAddress = os.getenv("kafkaAddress")+":{}".format(kafkaPort)  # ProducerIP : ProducerPort
 
-kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
+kafkaAddress1 = os.getenv("kafkaAddress")+":{}".format(kafkaPort1)  # ProducerIP : ProducerPort
 
-kafkaAddress1 = "192.168.43.181:{}".format(kafkaPort1)  # ProducerIP : ProducerPort
+collection_name = os.getenv("collection_name")
+database_name = os.getenv("database_name")
 
-collection_name = "nodeCollection"
-database_name = "iot"
-
-mongo_port = 27017
-mongo_host = "localhost"
+mongo_port = os.getenv("mongo_port")
+mongo_host = os.getenv("mongo_host")
 
 
 def fetch_nodes_status():
