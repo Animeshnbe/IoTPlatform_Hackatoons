@@ -19,6 +19,7 @@ def kafka_consume(ip, port, offset, topiclist):
         responses = []
         for message in consumer:
             responses.append(message.value)
+            break
         consumer.close()
         return responses
     except Exception as e:
