@@ -85,7 +85,7 @@ def deploy_util(app_name,username):
     if not found:
         return {"status":0,"message":"Not allowed"}
     # 2 fetch code artifacts
-    # download_zip(username.lower(),app_name+".zip")
+    download_zip(username.lower(),app_name+".zip")
     file_path = '../'+username.lower()+'/'+app_name
     with open(file_path+'/appmeta.json') as f:
         configs = json.load(f)
@@ -96,7 +96,7 @@ def deploy_util(app_name,username):
     with open(file_path+'/sensor.json') as f:
         sensors = json.load(f)
     
-    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"]},sensors.keys(),configs["controllers"],username)
+    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"]},sensors["sensor_instance_info"],controllers["controller_instance_info"],username)
     # 3 sensor binding
     # TBD by sensor manager after integration
     for k,v in configs["sensors"].items():

@@ -1,6 +1,6 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
-RUN apt-get update && apt-get install -y python3 py3-pip curl unzip
+RUN apt-get update && apt-get install -y python3 python3-pip curl unzip
 COPY requirements.txt ./home/requirements.txt
 ADD kafka_expt.py .
 RUN cd home && pip3 install --no-cache-dir -r requirements.txt

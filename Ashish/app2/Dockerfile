@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
 RUN apt-get update && apt-get install -y python3 py3-pip curl unzip
 COPY requirements.txt ./home/requirements.txt
