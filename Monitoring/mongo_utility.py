@@ -119,7 +119,35 @@ class MongoUtility():
         """
         try:
             database_connection = self.__mongo_OBJ__[_database_name]
-            mongo_response = database_connection[collection_name].update_one(condition, {"$set": json_data})
+            print("JSON DATA : ", json_data)
+            print(type(json_data))
+            mongo_response = database_connection[collection_name].update_one(condition, {"$set": json_data},
+                                                                             upsert=True)
+            print("Updated document from mongo")
+            return "success"
+        except Exception as e:
+            print("Error in updating document: " + str(e))
+            raise Exception
+
+    def update_one_field(self, module_id, update_value, _database_name, collection_name):
+        """
+        To update single document
+        :param module_id:
+        :param update_value:
+        :param _database_name:
+        :param collection_name:
+        :return: success
+        """
+        try:
+            database_connection = self.__mongo_OBJ__[_database_name]
+            print("JSON DATA : ", update_value)
+            print(type(update_value))
+            mongo_response = database_connection[collection_name].update_one({"moduleName": module_id},
+                                                                             {"$set": {"status": update_value}},
+                                                                             upsert=True)
+
+            # db.component_status.update_one({"component_name": component_name}, {"$set": {"status": status}},
+            #                                upsert=True)
             print("Updated document from mongo")
             return "success"
         except Exception as e:
