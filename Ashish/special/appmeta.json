@@ -1,0 +1,9 @@
+{
+    "app_name" : "MyApp",
+    "dependencies":[],
+    "env":{},
+    "lib":[],
+    "version":"",
+    "port":4353,
+    "base":"alpine"
+}
