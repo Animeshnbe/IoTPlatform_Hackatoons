@@ -77,10 +77,16 @@ def deploy_util(app_name,username):
     # 2 fetch code artifacts
     # download_zip(username.lower(),app_name+".zip")
     file_path = '../'+username.lower()+'/'+app_name
-    with open(file_path+'/sensor.json') as f:
+    with open(file_path+'/appmeta.json') as f:
         configs = json.load(f)
+
+    with open(file_path+'/controller.json') as f:
+        controllers = json.load(f)
+
+    with open(file_path+'/sensor.json') as f:
+        sensors = json.load(f)
     
-    generate_docker(file_path,{"base":configs["env"],"requirements":configs["requirements"],"dependency":req["services"],"filename":configs["filename"]},configs["sensors"].keys(),configs["controllers"])
+    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":req["services"],"filename":configs["filename"]},sensors.keys(),configs["controllers"])
     # 3 sensor binding
     # TBD by sensor manager after integration
     for k,v in configs["sensors"].items():
@@ -120,9 +126,21 @@ def deploy_util(app_name,username):
         # Create the collection
         collection = db.create_collection("runtime")
     collection = db["runtime"]
-    mydata = {"runtime_id": output, "app": app_name}
+    mydata = {"node_id": output, "app": app_name, "deployed_by":username}
 
     collection.insert_one(mydata)
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
 def stop_util(app_name,username):
+    # db.
+    result = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)
+    # decode the output and print it
+    output = result.stdout.decode()
+    print("Docker run status ",output)
+    return output
+
+def get_services(username):
+
+
+def test():
+    print("hello")
