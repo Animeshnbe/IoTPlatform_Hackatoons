@@ -3,8 +3,8 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 sensor_data = {
-    'temperature': 25,
-    'humidity': 50
+    'thermometer': 25,
+    'pressure': 50
 }
 
 user = {
@@ -17,8 +17,8 @@ def sensor_data_change():
         temperature = request.form['temperature']
         humidity = request.form['humidity']
 
-        sensor_data['temperature'] = temperature
-        sensor_data['humidity'] = humidity
+        sensor_data['thermometer'] = temperature
+        sensor_data['pressure'] = humidity
 
         
 
