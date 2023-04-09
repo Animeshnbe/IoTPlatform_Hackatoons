@@ -1,1 +1,4 @@
 .env
+scraps/
+data/
+*_vol/

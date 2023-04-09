@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import csv
 import random
 import json
 from time import sleep,time
@@ -22,9 +20,16 @@ producer = KafkaProducer(
 #         producer.send(topic_name, value=data)
 #         sleep(1)
 
-def produce(sensor,rate):
+def produce(sensor,rate,instance=None):
     df = pd.read_csv("../data/"+sensor+".csv")
 
     for _,row in df.iterrows():
-        producer.send(sensor, value=row.to_dict())
+        if instance is None:
+            # call_sensor_instance
+            producer.send(sensor, key=None,value=row.to_dict())
+        else:
+            producer.send(sensor, key=instance,value=row.to_dict())
         sleep(rate)
+
+if __name__=='__main__':
+    produce("pressure",5)

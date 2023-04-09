@@ -23,9 +23,10 @@ def on_error(e):
     print(f"Error sending message: {e}")
 
 def produce(topic,is_async=True):  
-    producer = KafkaProducer(bootstrap_servers="host.docker.internal:19092")
+    # producer = KafkaProducer(bootstrap_servers=["host.docker.internal:19092"])
+    producer = KafkaProducer(bootstrap_servers=["localhost:19092"])
     hostname = str.encode(socket.gethostname())
-
+    print(socket.gethostname())
     # # Produce asynchronously
     # for i in range(100):
     #     msg = f"message #{i}"
@@ -54,7 +55,7 @@ def produce(topic,is_async=True):
         for i in range(200, 300):
             msg = f"synchronous message #{i}"
             future = producer.send(
-                "demo",
+                topic,
                 key=hostname,
                 value=str.encode(msg)
             )
@@ -67,7 +68,7 @@ def produce(topic,is_async=True):
 
 def new_consumer(name):
     consumer = KafkaConsumer(
-        bootstrap_servers=["host.docker.internal:19092"],
+        bootstrap_servers=["localhost:19092"],
         auto_offset_reset="earliest",
         enable_auto_commit=True,
         consumer_timeout_ms=1000
@@ -84,8 +85,12 @@ def new_consumer(name):
         print(data["timestamp"])
 
 
-for i in range(1,4):
-    first = sys.argv[i]
-    new_consumer(first)
+# for i in range(1,4):
+#     first = sys.argv[i]
+#     new_consumer(first)
 
-produce(sys.argv[4])
+new_consumer(sys.argv[1])
+produce(sys.argv[2], False)
+
+
+# docker run --net=redpanda-quickstart_redpanda_network -v runtime_special:/home --name=special special
