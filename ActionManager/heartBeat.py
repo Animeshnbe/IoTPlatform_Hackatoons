@@ -5,12 +5,12 @@ from time import sleep
 import threading
 from kafkautilities import kafka_consume, kafka_produce
 
-kafkaIPPort = '52.15.89.83:9092'
-producer = KafkaProducer(bootstrap_servers=kafkaIPPort,
-                         value_serializer=lambda v: json.dumps(v).encode('utf-8')
-                         )
+# kafkaIPPort = '52.15.89.83:9092'
+# producer = KafkaProducer(bootstrap_servers=kafkaIPPort,
+#                          value_serializer=lambda v: json.dumps(v).encode('utf-8')
+#                          )
 
-kafka_ip = "10.2.136.148"
+kafka_ip = "10.2.135.170"
 kafka_port = "9092"
 
 
@@ -21,8 +21,9 @@ def heart_beat(module_name):
             'moduleName': module_name,
             'currentTime': curr_time
         }
+        print("message : ", message)
         kafka_produce(kafka_ip, kafka_port, "module_heart_rate", message)
-        producer.send('monitor', message)
+        # producer.send('monitor', message)
         sleep(5)
 
 
