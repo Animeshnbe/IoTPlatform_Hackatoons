@@ -19,10 +19,10 @@ def send_email(subject, text, receiver_email):
     :param receiver_email: string
     :return: response
     '''
-    # gmail_user = 'nikhil.180410107039@gmail.com'
-    gmail_user = parser.get("EMAIL", "email_sender")
-    gmail_app_password = parser.get("EMAIL", "email_password")
-    # gmail_app_password = 'oheowxctqofjxznn'
+    gmail_user = 'nikhil.180410107039@gmail.com'
+    # gmail_user = parser.get("EMAIL", "email_sender")
+    # gmail_app_password = parser.get("EMAIL", "email_password")
+    gmail_app_password = 'oheowxctqofjxznn'
 
     sent_from = gmail_user
     sent_to = [receiver_email]
@@ -38,8 +38,10 @@ def send_email(subject, text, receiver_email):
     """ % (sent_from, ", ".join(sent_to), sent_subject, sent_body)
 
     try:
-        smtp_host = parser.get("EMAIL", "smtp_host")
-        smtp_port = int(parser.get("EMAIL", "smtp_port"))
+        # smtp_host = parser.get("EMAIL", "smtp_host")
+        smtp_host = "smtp.gmail.com"
+        # smtp_port = int(parser.get("EMAIL", "smtp_port"))
+        smtp_port = 465
         server = smtplib.SMTP_SSL(smtp_host, smtp_port)
         server.ehlo()
         server.login(gmail_user, gmail_app_password)

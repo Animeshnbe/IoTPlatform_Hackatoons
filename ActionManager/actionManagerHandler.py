@@ -15,11 +15,14 @@ parser = configparser.RawConfigParser(allow_no_value=True)
 CONFIGURATION_FILE = "settings.conf"
 parser.read([CONFIGURATION_FILE])
 
-mongo_port = int(parser.get("MONGO", "mongo_port"))
-mongo_host = parser.get("MONGO", "mongo_host")
-
-kafka_port = parser.get("KAFKA", "kafka_port")
-kafka_ip = parser.get("KAFKA", "kafka_ip")
+# mongo_port = int(parser.get("MONGO", "mongo_port"))
+# mongo_host = parser.get("MONGO", "mongo_host")
+#
+# kafka_port = parser.get("KAFKA", "kafka_port")
+# kafka_ip = parser.get("KAFKA", "kafka_ip")
+# kafka_ip = "redpanda-0"
+kafka_ip = "10.2.136.148"
+kafka_port = "9092"
 # kafkaPort = "9092"
 # kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
 kafkaAddress = kafka_ip + ":" + kafka_port
@@ -49,7 +52,7 @@ def helper_function(location_id, user_id, device_id, device_type, device_command
         # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
         message = dict(location_id=location_id, user_id=user_id, device_id=device_id, device_type=device_type,
                        device_command=device_command)
-        topic = parser.get("KAFKA", "action_device")
+        topic = "action_device"
         # print("kafka_ip : ", kafka_ip)
         # print("kafka_port : ", kafka_port)
         # print("topic : ", topic)
