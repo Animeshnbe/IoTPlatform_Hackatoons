@@ -19,7 +19,8 @@ configs = config['local']
 from mockdata import produce
 
 import pymongo
-client = pymongo.MongoClient(configs["MONGO_URI"],configs["MONGO_PORT"])
+client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
+# client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
 db = client['IAS']
 
 def download_zip(container, zip_file_name):
@@ -50,6 +51,8 @@ def generate_docker(fp,service, sensor_topic, controller_topic):
     df.write(baseimage)
     df.write('\n')
 
+    if service["base"]=="alpine":
+        env = 'RUN apk update && apk add python3 py3-pip curl unzip'
     env = 'RUN apt-get update && apt-get install -y python3 python3-pip\n\
 RUN pip3 install Flask\n'
     df.write(env)
@@ -132,15 +135,29 @@ def deploy_util(app_name,username):
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
 def stop_util(app_name,username):
-    # db.
-    result = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)
-    # decode the output and print it
-    output = result.stdout.decode()
-    print("Docker run status ",output)
-    return output
+    query = {"app": app_name, "deployed_by": username, "status": True}    
+    results = db["runtime"].find(query)
+    for result in results:
+        app_name = result.get("app")        
+        if app_name:
+            res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
+            output = res.stdout.decode()
+            print("Docker run status ",output)
+            db["runtime"].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
+            return output
+    return "No app found running"
+    
 
 def get_services(username):
-    pass
+    query = {"deployed_by" : username}    
+    results = db["runtime"].find(query)
+    app_names = []
+    for result in results:        
+        app_name = result.get("app")
+        if app_name:  
+            app_names.append(app_name)
+    print(app_names)
+
 
 def test():
     print("hello")

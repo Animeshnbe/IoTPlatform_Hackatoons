@@ -32,4 +32,4 @@ def produce(sensor,rate,instance=None):
         sleep(rate)
 
 if __name__=='__main__':
-    produce("pressure",5)
+    produce("thermometer",0.1)
