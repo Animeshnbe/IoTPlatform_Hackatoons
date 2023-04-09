@@ -1,6 +1,6 @@
 import flask
 
-from utils import deploy_util
+from utils import deploy_util, stop_util
 
 def req_handler(app):
     @app.route('/deploy', methods=['POST'])
@@ -22,6 +22,19 @@ def req_handler(app):
             # fetch config
         else:
             deploy_util(req['username'],req['service_name'])
+
+    @app.route('/stop_service', methods=['POST'])
+    def stop():
+        req = flask.request.get_json()
+        print("Json ",req)
+
+        if req["type"]=='system':
+            pass
+            # provision docker swarm
+            # init node
+            # fetch config
+        else:
+            stop_util(req['username'],req['service_name'])
 
     @app.route('/test', methods=['POST'])
     def test():

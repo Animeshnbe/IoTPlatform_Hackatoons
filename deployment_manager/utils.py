@@ -75,8 +75,8 @@ def deploy_util(app_name,username):
     if not found:
         return {"status":0,"message":"Not allowed"}
     # 2 fetch code artifacts
-    # download_zip(req['user'].lower(),req['appname']+".zip")
-    file_path = '../'+req['user'].lower()+'/'+app_name
+    # download_zip(username.lower(),app_name+".zip")
+    file_path = '../'+username.lower()+'/'+app_name
     with open(file_path+'/sensor.json') as f:
         configs = json.load(f)
     
@@ -87,7 +87,7 @@ def deploy_util(app_name,username):
         threading.Thread(target=produce, args=(k,v,)).start()
 
     # 4 build and deploy
-    fp = "runtime_"+app_name+"_"+str(uuid.uuid1())
+    fp = app_name+"_vol_"+str(uuid.uuid1())
     os.mkdir(fp)
     #'" + fp +"'
     print('docker build -t '+app_name+':latest ' + file_path +'/')
@@ -106,7 +106,7 @@ def deploy_util(app_name,username):
 
     # execute the command and capture its output
     # result = subprocess.run("docker run -d -v runtime_special:/home --name=special special", stdout=subprocess.PIPE, shell=True)
-    result = subprocess.run("docker run -d --net=host -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
+    result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
     print("Docker run status ",output)
@@ -124,3 +124,5 @@ def deploy_util(app_name,username):
 
     collection.insert_one(mydata)
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
+
+def stop_util(app_name,username):
