@@ -1,13 +1,14 @@
 {
     "app_name" : "MyApp",
+    "main_file" : "kafka_expt.py",
     "dependencies":{
         "platform":{
             "notification":1
+        },
+        "bundle":{
+            "mongodb":"True",
+            "custom1":"False"
         }
-    },
-       "bundle":{
-        "mongodb":"True",
-        "custom1":"False"
     },
     "env":{
         "var1":2432,

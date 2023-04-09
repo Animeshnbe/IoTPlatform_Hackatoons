@@ -40,21 +40,28 @@ def download_zip(container, zip_file_name):
     with zipfile.ZipFile(blob_data) as zip_file:
         zip_file.extractall("../"+container)
 
-def generate_docker(fp,service, sensor_topic, controller_topic):
+def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df = open(fp+'/Dockerfile', 'w')
     pip = service['requirements']
     filename = service['filename']
     
     dependency = service['dependency']   #other service topics
 
+    for ser in dependency['platform']:
+        # deploy_util(ser,username)
+        pass
+
+    for ser in dependency['bundle']:
+        if dependency['bundle'][ser]=="True":
+            subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
     baseimage = 'FROM '+service["base"]+'\n'
     df.write(baseimage)
     df.write('\n')
 
     if service["base"]=="alpine":
         env = 'RUN apk update && apk add python3 py3-pip curl unzip'
-    env = 'RUN apt-get update && apt-get install -y python3 python3-pip\n\
-RUN pip3 install Flask\n'
+    else:
+        env = 'RUN apt-get update && apt-get install -y python3 python3-pip'
     df.write(env)
 
     for package in pip:
@@ -89,7 +96,7 @@ def deploy_util(app_name,username):
     with open(file_path+'/sensor.json') as f:
         sensors = json.load(f)
     
-    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":req["services"],"filename":configs["filename"]},sensors.keys(),configs["controllers"])
+    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"]},sensors.keys(),configs["controllers"],username)
     # 3 sensor binding
     # TBD by sensor manager after integration
     for k,v in configs["sensors"].items():
