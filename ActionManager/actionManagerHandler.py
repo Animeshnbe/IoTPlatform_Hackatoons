@@ -52,11 +52,10 @@ def email_handler(to, subject, content):
         return response
 
 
-def helper_function(user_id, temperature, humidity, brightness, device_id, device_type):
+def helper_function(user_id, device_id, new_value):
     try:
         # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-        message = dict(user_id=user_id, temperature=temperature, humidity=humidity, brightness=brightness,
-                       device_id=device_id, device_type=device_type)
+        message = dict(user_id=user_id, device_id=device_id, new_value = new_value)
         topic = "action_device"
         # print("kafka_ip : ", kafka_ip)
         # print("kafka_port : ", kafka_port)
@@ -96,13 +95,10 @@ def action_manager_request_handler(input_json):
     try:
         print(input_json)
         user_id = input_json.get("user_id", "")
-        humidity = input_json.get("humidity", "None")
-        temperature = input_json.get("temperature", "None")
-        brightness = input_json.get("brightness", "None")
+        new_value = input_json.get("new_value", "None")
         device_id = input_json.get("device_id", "")
-        device_type = input_json.get("device_type", "")
         th = threading.Thread(target=helper_function,
-                              args=(user_id, temperature, humidity, brightness, device_id, device_type,))
+                              args=(user_id, device_id,new_value))
         th.start()
         # res = threading.Thread(target=listening_to_sensor_manager, args=(result,))
         # res.start()

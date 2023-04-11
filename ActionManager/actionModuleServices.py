@@ -20,7 +20,8 @@ def action_manager_request_service():
             input_json = request.get_json()
             print(type(input_json))
             action_manager_request_handler(input_json)
-            response = listening_to_sensor_manager()
+            # response = listening_to_sensor_manager()
+            response = dict(message="success")
             return response
         except Exception as e:
             raise Exception(str(e))
