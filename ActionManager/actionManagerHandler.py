@@ -1,4 +1,4 @@
-from kafka import KafkaConsumer
+import requests
 import json
 import time
 import threading
@@ -16,6 +16,7 @@ parser = configparser.RawConfigParser(allow_no_value=True)
 CONFIGURATION_FILE = "settings.conf"
 parser.read([CONFIGURATION_FILE])
 
+result = []
 # mongo_port = int(parser.get("MONGO", "mongo_port"))
 # mongo_host = parser.get("MONGO", "mongo_host")
 mongo_port = 27017
@@ -24,11 +25,12 @@ mongo_host = "localhost"
 # kafka_port = parser.get("KAFKA", "kafka_port")
 # kafka_ip = parser.get("KAFKA", "kafka_ip")
 # kafka_ip = "redpanda-0"
-kafka_ip = "10.2.136.148"
+kafka_ip = "10.1.38.226"
 kafka_port = "9092"
 # kafkaPort = "9092"
 # kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
 kafkaAddress = kafka_ip + ":" + kafka_port
+sensor_response_topic = "sensor_response"
 
 
 def email_handler(to, subject, content):
@@ -82,8 +84,12 @@ def send_data_to_sensor(host_topic, message):
 
 
 def listening_to_sensor_manager():
-    response = kafka_consume(kafka_ip, kafka_port, "latest", ["response_from_sensor_manager"])
-    return response
+    # response = kafka_consume(kafka_ip, kafka_port, "latest", [sensor_response_topic])
+    res = requests.get(
+        url=f"/consumers/test_group/instances/test_consumer2/records",
+        params={"timeout": 1000, "max_bytes": 100000, "partition": 0, "offset": 1, },
+        headers={"Accept": "application/vnd.kafka.json.v2+json"}).json()
+    return res
 
 
 def action_manager_request_handler(input_json):
@@ -98,6 +104,8 @@ def action_manager_request_handler(input_json):
         th = threading.Thread(target=helper_function,
                               args=(user_id, temperature, humidity, brightness, device_id, device_type,))
         th.start()
-        return {"response": "success"}
+        # res = threading.Thread(target=listening_to_sensor_manager, args=(result,))
+        # res.start()
+        # res.join()
     except Exception as e:
         print(e)

@@ -2,7 +2,7 @@ from flask import request, Blueprint, render_template, redirect, flash
 from werkzeug.utils import secure_filename
 import os
 import kafka
-from actionManagerHandler import action_manager_request_handler, email_handler
+from actionManagerHandler import action_manager_request_handler, email_handler, listening_to_sensor_manager
 from notificationUtility import send_email
 
 actionPrint = Blueprint("actionModuleServices", __name__)
@@ -19,7 +19,8 @@ def action_manager_request_service():
         try:
             input_json = request.get_json()
             print(type(input_json))
-            response = action_manager_request_handler(input_json)
+            action_manager_request_handler(input_json)
+            response = listening_to_sensor_manager()
             return response
         except Exception as e:
             raise Exception(str(e))
