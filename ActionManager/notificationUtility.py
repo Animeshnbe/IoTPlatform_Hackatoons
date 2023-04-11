@@ -2,6 +2,10 @@ import sys
 import smtplib
 import configparser
 import json
+import os
+from twilio.rest import Client
+account_sid = 'AC1380002ba0e2b44a4e373592ae725925'
+auth_token = 'da0da81c06f4c2b6775f0744016b95a4'
 
 # Config file parser
 parser = configparser.RawConfigParser(allow_no_value=True)
@@ -53,3 +57,11 @@ def send_email(subject, text, receiver_email):
     except Exception as exception:
         print("Error: %s!\n\n" % exception)
         return "Error"
+
+
+# from_number = 15076323386
+# to_number = 917034526710
+def send_sms(from_number,to_number,message):
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(body=message, from_ =  from_number, to = to_number)
+    print(message.sid)
