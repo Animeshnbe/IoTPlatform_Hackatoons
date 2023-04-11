@@ -11,50 +11,14 @@ import subprocess
 from azure.storage.blob import BlobServiceClient
 import zipfile
 from loggingUtility import logger_func
+from mockdata import produce
 
 logger = logger_func()
-
-# logger.info("The program is working as expected")
-# logger.warning("The program may not function properly")
-# logger.error("The program encountered an error")
-# logger.critical("The program crashed")
 
 import configparser
 config = configparser.ConfigParser()
 config.read('.env')
 configs = config['local']
-
-from mockdata import produce
-
-import pymongo
-client = pymongo.MongoClient(configs["MONGO_CONN_STRING"])
-# client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
-db = client['IAS_Global']
-
-def download_zip(container, zip_file_name,extract=False):
-    logger.info("ARGS +++++ ",container,zip_file_name)
-    connect_str = "DefaultEndpointsProtocol=https;AccountName=aman0ias;AccountKey=ejuMHDXoYsp4ktNpndJTqrC0QXgEi7DCv0cJiK94R6ZhMYZa+VmKnYcTNv3T6qIc/qoYnnZbGZPg+AStGotFJA==;EndpointSuffix=core.windows.net"
-
-    container_name = container         #container name
-    blob_name = zip_file_name          #zip file name
-
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-
-    blob_data = io.BytesIO()
-    blob_client.download_blob().download_to_stream(blob_data)
-
-    if not os.path.exists("../uploads/"+container):
-        os.mkdir("../uploads/"+container)
-        
-    if extract:
-        os.chdir("../uploads/"+container)
-        with zipfile.ZipFile(blob_data) as zip_file:
-            zip_file.extractall("../uploads/"+container)
-    else:
-        with open("../uploads/"+container+"/"+zip_file_name, "wb") as f:
-            f.write(blob_data.getbuffer())
 
 def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df = open(fp+'/Dockerfile', 'w')
@@ -107,21 +71,11 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.close()
 
 def deploy_util(app_name,username,port=None):
-    # 1 verify user
-    found = db['users'].find_one({'username':username})
-    if not found:
-        return {"status":0,"message":"Not allowed"}
-    
-    resp = requests.post("http://nodemgr:8887",json={"port":port}).json()
-    if resp["msg"]!="OK":
-        return {"status":0,"message":resp["msg"]}
-    
-    # ssh = paramiko.SSHClient()
-    # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
-    # 2 fetch code artifacts
-    # download_zip(username.lower(),app_name+".zip")
-    file_path = '../uploads/'+username.lower()+'/'+app_name
+    os.chdir("../uploads/"+username)
+    with zipfile.ZipFile(app_name+".zip") as zip_file:
+        zip_file.extractall(".")
+
+    file_path = app_name
     with open(file_path+'/appmeta.json') as f:
         configs = json.load(f)
 
@@ -179,30 +133,9 @@ def deploy_util(app_name,username,port=None):
     collection.insert_one(mydata)
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
-def stop_util(app_name,username):
-    query = {"app": app_name, "deployed_by": username, "status": True}    
-    results = db["app_runtimes"].find(query)
-    for result in results:
-        app_name = result.get("app")        
-        if app_name:
-            res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
-            output = res.stdout.decode()
-            print("Docker run status ",output)
-            db["app_runtimes"].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
-            return output
-    return "No app found running"
-    
 
-def get_services(username):
-    query = {"deployed_by" : username}    
-    results = db["app_runtimes"].find(query)
-    app_names = []
-    for result in results:        
-        app_name = result.get("app")
-        if app_name:  
-            app_names.append(app_name)
-    print(app_names)
+# download_zip("ashish","special.zip")
 
-
-def test():
-    print("hello")
+os.chdir("../uploads/ashish")
+with zipfile.ZipFile("special.zip") as zip_file:
+    zip_file.extractall(".")

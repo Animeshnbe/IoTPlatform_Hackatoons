@@ -1,11 +1,30 @@
 import requests
 import json
+import configparser
+config = configparser.ConfigParser()
+config.read('.env')
+configs = config['local']
 
-base_uri = "http://20.193.144.28:18082"
+base_uri = configs["KAFKA_REST"]
+
 def pretty(text):
   print(json.dumps(text, indent=2))
   
-res = requests.get(f"{base_uri}/topics").json()
+def check_request(worklist, consumer_group, name="test"):
+  with open("kafka_rest.py","w") as f:
+  
+  # get_all_sensors()
+  devices = 
+  consume = False
+  produce = []
+  for item in worklist:
+    if item["type"]=="controller":
+      produce.append(item[''])
+
+      
+
+    # f.write(f'''
+  # res = requests.get(f"{base_uri}/topics").json()
 pretty(res)
 
 # Register consumer

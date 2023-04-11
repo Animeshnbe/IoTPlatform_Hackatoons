@@ -1,12 +1,7 @@
-azure-core==1.26.3
-azure-storage-blob==12.15.0
+azure
 bcrypt==4.0.1
 cryptography==39.0.0
 docker==6.0.1
-ecos==2.0.12
-entrypoints==0.4
-exceptiongroup==1.1.0
-executing==1.2.0
 filelock==3.8.0
 Flask==2.2.2
 Flask-Login==0.6.2
