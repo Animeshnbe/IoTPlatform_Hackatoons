@@ -4,11 +4,12 @@ import time
 import threading
 from mongo_utility import MongoUtility
 from bson import json_util
+from datetime import datetime
 from kafka import KafkaProducer
-from kafka import KafkaConsumer
 from notificationUtility import send_email
 import configparser
 from kafkautilities import kafka_consume, kafka_produce
+from mongo_utility import MongoUtility
 
 # Config file parser
 parser = configparser.RawConfigParser(allow_no_value=True)
@@ -17,6 +18,8 @@ parser.read([CONFIGURATION_FILE])
 
 # mongo_port = int(parser.get("MONGO", "mongo_port"))
 # mongo_host = parser.get("MONGO", "mongo_host")
+mongo_port = 27017
+mongo_host = "localhost"
 #
 # kafka_port = parser.get("KAFKA", "kafka_port")
 # kafka_ip = parser.get("KAFKA", "kafka_ip")
@@ -47,17 +50,22 @@ def email_handler(to, subject, content):
         return response
 
 
-def helper_function(location_id, user_id, device_id, device_type, device_command):
+def helper_function(user_id, temperature, humidity, brightness, device_id, device_type):
     try:
         # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-        message = dict(location_id=location_id, user_id=user_id, device_id=device_id, device_type=device_type,
-                       device_command=device_command)
+        message = dict(user_id=user_id, temperature=temperature, humidity=humidity, brightness=brightness,
+                       device_id=device_id, device_type=device_type)
         topic = "action_device"
         # print("kafka_ip : ", kafka_ip)
         # print("kafka_port : ", kafka_port)
         # print("topic : ", topic)
         # print("message : ", message)
         kafka_produce(kafka_ip, kafka_port, topic, message)
+        current_timestamp = datetime.now()
+        message["current_timestamp"] = current_timestamp
+        mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
+        user_data = mongo_utility.insert_one(message, "iot", "action_logs")
+
     except Exception as e:
         print(e)
 
@@ -73,16 +81,22 @@ def send_data_to_sensor(host_topic, message):
         time.sleep(1)
 
 
+def listening_to_sensor_manager():
+    response = kafka_consume(kafka_ip, kafka_port, "latest", ["response_from_sensor_manager"])
+    return response
+
+
 def action_manager_request_handler(input_json):
     try:
         print(input_json)
-        location_id = input_json.get("location_id", "")
         user_id = input_json.get("user_id", "")
+        humidity = input_json.get("humidity", "None")
+        temperature = input_json.get("temperature", "None")
+        brightness = input_json.get("brightness", "None")
         device_id = input_json.get("device_id", "")
         device_type = input_json.get("device_type", "")
-        device_command = input_json.get("device_command", "")
         th = threading.Thread(target=helper_function,
-                              args=(location_id, user_id, device_id, device_type, device_command,))
+                              args=(user_id, temperature, humidity, brightness, device_id, device_type,))
         th.start()
         return {"response": "success"}
     except Exception as e:
