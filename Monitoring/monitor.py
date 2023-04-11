@@ -9,6 +9,7 @@ import os
 import datetime
 from communication_api import monitor
 from loggingUtility import logger_func
+from sshUtility import SSHUtil
 
 logger = logger_func()
 
@@ -75,7 +76,8 @@ def fetch_module_status():
                     else:
                         print(module + " down")
                         module_status[module] = 'down'
-                        # fun(module, services[module]['server'], services[module]['path'], services[module]['file'])
+                        obj = SSHUtil()
+                        # a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
                         down.append(module)
                 else:
                     if module in down:

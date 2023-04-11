@@ -5,7 +5,7 @@ import socket
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-class ssh_util():
+class SSHUtil():
     def __init__(self):
         # self.ssh_output = None
         # self.ssh_error = None
@@ -95,7 +95,7 @@ class ssh_util():
             return result_flag, "self.ssh_error"
 
 
-obj = ssh_util()
+obj = SSHUtil()
 a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
 print("a : ", a)
 print("b : ", b)
