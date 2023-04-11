@@ -1,6 +1,7 @@
 import flask
-
-from utils import deploy_util, stop_util, get_services
+import threading
+from utils import deploy_util, stop_util, restart_util, get_services
+from heartBeat import heart_beat
 
 def req_handler(app):
     @app.route('/deploy', methods=['POST'])
@@ -14,27 +15,32 @@ def req_handler(app):
     def start():
         req = flask.request.get_json()
         print("Json ",req)
-
         if req["type"]=='system':
             pass
             # provision docker swarm
             # init node
             # fetch config
         else:
-            deploy_util(req['username'],req['service_name'])
+            deploy_util(req['username'],req['service_name'],req['port'])
 
     @app.route('/stop_service', methods=['POST'])
     def stop():
         req = flask.request.get_json()
         print("Json ",req)
-        stop_util(req['username'],req['service_name'])
+        stop_util(req['username'],req['service_name'], req['type'])
+
+    @app.route('/restart_service', methods=['POST'])
+    def restart():
+        req = flask.request.get_json()
+        print("Json ",req)
+        restart_util(req['username'],req['service_name'], req['type'])
 
     @app.route('/get_services', methods=['GET'])
     def get():
         req = flask.request.get_json()
         print("Json ",req)
 
-        get_services(req['username'],req['service_name'])
+        get_services(req)
 
     @app.route('/test', methods=['POST'])
     def test():
@@ -46,6 +52,9 @@ def req_handler(app):
 
 if __name__ == '__main__':
     app = flask.Flask('deploymgr')
+    t = threading.Thread(target=heart_beat, args=("deployment_manager",))
+    t.daemon = True
+    t.start()
     req_handler(app)
 
 	

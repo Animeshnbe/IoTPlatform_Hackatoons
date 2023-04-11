@@ -47,7 +47,7 @@ def download_zip(container, zip_file_name,extract=False):
 
     if not os.path.exists("../uploads/"+container):
         os.mkdir("../uploads/"+container)
-        
+
     if extract:
         os.chdir("../uploads/"+container)
         with zipfile.ZipFile(blob_data) as zip_file:
@@ -109,6 +109,57 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
 def deploy_util(app_name,username,port=None):
     # 1 verify user
     found = db['users'].find_one({'username':username})
+    app_found = db['app_uploads'].find_one({'app':app_name})
+    if not found:
+        return {"status":0,"message":"No such user"}
+    if not app_found:
+        return {"status":0,"message":"No such app"}
+    elif 'admin' not in found["role"] and app_found["owner"]!=username:
+        return {"status":0,"message":"Invalid user"}
+    
+    username = app_found["owner"].lower()
+    resp = requests.post("http://nodemgr:8887",json={"port":port}).json()
+    if resp["msg"]!="OK":
+        return {"status":0,"message":resp["msg"]}
+    
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+    ssh.exec_command("mkdir -p uploads/"+app_name.lower())
+    ftp_client=ssh.open_sftp()
+    ftp_client.put("m_init.py","./uploads/"+app_name.lower()+"/init.py")
+    if port is not None:
+        if "admin" not in found.role:
+            return {"status":0, "message":"Starting service not allowed"}
+        ftp_client.put("../services/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+    else:
+        # 2 fetch code artifacts
+        download_zip(username,app_name+".zip")
+        ftp_client.put("../uploads/"+username+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+    ftp_client.close()
+    ssh.exec_command("cd uploads/"+app_name.lower())
+    _, stdout, stderr = ssh.exec_command("python3 init.py")
+    result = json.loads(stdout.read().decode())
+    if result['status']==1:
+        if port is not None:
+            collection = "services"
+        else:
+            collection = "app_runtimes"
+        if collection in db.list_collection_names():
+            print("The collection already exists.")
+        else:
+            # Create the collection
+            collection = db.create_collection(collection)
+        collection = db[collection]
+        mydata = {"node_id": result["runtime_id"], "app": app_name, "deployed_by":username, "status": True,
+                  "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
+        collection.insert_one(mydata)
+
+    return result
+
+def deploy_util2(app_name,username,port=None):
+    # 1 verify user
+    found = db['users'].find_one({'username':username})
     if not found:
         return {"status":0,"message":"Not allowed"}
     
@@ -120,7 +171,8 @@ def deploy_util(app_name,username,port=None):
     # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
     # 2 fetch code artifacts
-    # download_zip(username.lower(),app_name+".zip")
+    
+    download_zip(username.lower(),app_name+".zip", True)
     file_path = '../uploads/'+username.lower()+'/'+app_name
     with open(file_path+'/appmeta.json') as f:
         configs = json.load(f)
@@ -149,7 +201,7 @@ def deploy_util(app_name,username,port=None):
     # print("Build result: ",out)
     if out!=0:
         return {"status":0,"message":"Failed build due to invalid configs"}
-    if username == '__admin' or True: 
+    if 'admin' in found["role"] or True: 
         container_name = app_name
     else:
         return {"status":0,"message":"Invalid user"}
@@ -179,23 +231,78 @@ def deploy_util(app_name,username,port=None):
     collection.insert_one(mydata)
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
-def stop_util(app_name,username):
-    query = {"app": app_name, "deployed_by": username, "status": True}    
-    results = db["app_runtimes"].find(query)
+def stop_util(app_name,username,type="app_runtimes"):
+    found = db['users'].find_one({'username':username})
+    if not found:
+        return {"status":0,"message":"No such user"}
+    app_found = db[type].find_one({'app':app_name, "status": True})
+    if not app_found:
+        return {"status":0,"message":"No such deployed app found running"}
+    elif 'admin' not in found["role"] and app_found["deployed_by"]!=username:
+        return {"status":0,"message":"Invalid user"}
+    
+    query = {"app": app_name, "status": True}    
+    results = db[type].find(query)
     for result in results:
-        app_name = result.get("app")        
+        app_name = result.get("app")    
         if app_name:
-            res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
-            output = res.stdout.decode()
+            res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
+            self_ip = res.stdout.decode()[-1]
+            if result['machine']['ip'] != self_ip:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(hostname=result['machine']["ip"],username=result['machine']["username"],password=result['machine']["password"])
+                _,res,_ = ssh.exec_command("docker container stop "+app_name)
+                output = res.read().decode()
+            else:
+                res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
+                output = res.stdout.decode()
             print("Docker run status ",output)
-            db["app_runtimes"].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
+            db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
             return output
     return "No app found running"
     
+def restart_util(app_name,username,type="services"):
+    found = db['users'].find_one({'username':username})
+    if not found:
+        return {"status":0,"message":"No such user"}
+    app_found = db[type].find_one({'app':app_name, "status": False})
+    if not app_found:
+        return {"status":0,"message":"No such deployed app found stopped"}
+    elif 'admin' not in found["role"] and app_found["deployed_by"]!=username:
+        return {"status":0,"message":"Invalid user"}
+    
+    query = {"app": app_name, "status": False}    
+    results = db[type].find(query)
+    for result in results:
+        app_name = result.get("app")    
+        if app_name:
+            res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
+            self_ip = res.stdout.decode()[-1]
+            if result['machine']['ip'] != self_ip:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(hostname=result['machine']["ip"],username=result['machine']["username"],password=result['machine']["password"])
+                _,res,_ = ssh.exec_command("docker run -d --net="+app_found["deployed_by"]+"_net -v "+result['volume']+":/home --name="+app_name+" "+app_name)
+                output = res.read().decode()[:-1]
+            else:
+                res = subprocess.run("docker run -d --name="+app_name+" "+app_name, stdout=subprocess.PIPE, shell=True)           
+                output = res.stdout.decode()
+            print("Docker run status ",output)
+            db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
+            return output
+    return "No app found running"
 
-def get_services(username):
-    query = {"deployed_by" : username}    
-    results = db["app_runtimes"].find(query)
+def get_services(req):
+    user = db["users"].find_one({"username":req["username"]})
+    if user["role"]=="admin":
+        results = db["services"].find()
+    elif user["role"]=="app_admin":
+        query = {"deployed_by" : req["username"]}    
+        results = db["app_runtimes"].find(query)
+    else:
+        query = {"type" : "open"}
+        results = db["services"].find(query)
     app_names = []
     for result in results:        
         app_name = result.get("app")
