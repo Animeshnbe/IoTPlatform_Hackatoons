@@ -47,8 +47,5 @@ def req_handler(app):
 if __name__ == '__main__':
     app = flask.Flask('deploymgr')
     req_handler(app)
-    
-    # while True:
-        # threading.Thread(target=req_handler,args=(app,)).start()
-        # t1.join()
+
 	

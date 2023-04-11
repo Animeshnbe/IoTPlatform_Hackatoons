@@ -1,0 +1,22 @@
+version: '3'
+services:
+  app1:
+    build: ./deployment_manager
+    ports:
+    - "5001:8888"
+  app2:
+    build: ./deployment_manager
+    ports:
+    - "5002:8888"
+  app3:
+    build: ./deployment_manager
+    ports:
+    - "5003:8888"
+  nginx:
+    build: ./nginx 
+    ports:
+    - "8888:80"
+    depends_on:
+      - app1
+      - app2
+      - app3

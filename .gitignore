@@ -1,4 +1,8 @@
 .env
 scraps/
 data/
+uploads/
 *_vol/
+*.zip
+*.log
+__pycache__/

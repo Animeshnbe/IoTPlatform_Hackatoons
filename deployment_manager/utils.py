@@ -10,6 +10,14 @@ import uuid
 import subprocess
 from azure.storage.blob import BlobServiceClient
 import zipfile
+from loggingUtility import logger_func
+
+logger = logger_func()
+
+# logger.info("The program is working as expected")
+# logger.warning("The program may not function properly")
+# logger.error("The program encountered an error")
+# logger.critical("The program crashed")
 
 import configparser
 config = configparser.ConfigParser()
@@ -19,12 +27,12 @@ configs = config['local']
 from mockdata import produce
 
 import pymongo
-client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
+client = pymongo.MongoClient(configs["MONGO_CONN_STRING"])
 # client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
-db = client['IAS']
+db = client['IAS_Global']
 
 def download_zip(container, zip_file_name):
-    # print("ARGS +++++ ",container,zip_file_name)
+    logger.info("ARGS +++++ ",container,zip_file_name)
     connect_str = "DefaultEndpointsProtocol=https;AccountName=aman0ias;AccountKey=ejuMHDXoYsp4ktNpndJTqrC0QXgEi7DCv0cJiK94R6ZhMYZa+VmKnYcTNv3T6qIc/qoYnnZbGZPg+AStGotFJA==;EndpointSuffix=core.windows.net"
 
     container_name = container         #container name
@@ -37,8 +45,11 @@ def download_zip(container, zip_file_name):
     blob_data = io.BytesIO()
     blob_client.download_blob().download_to_stream(blob_data)
 
+    if not os.path.exists("../uploads/"+container):
+        os.mkdir("../uploads/"+container)
+    os.chdir("../uploads/"+container)
     with zipfile.ZipFile(blob_data) as zip_file:
-        zip_file.extractall("../"+container)
+        zip_file.extractall("../uploads/"+container)
 
 def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df = open(fp+'/Dockerfile', 'w')
@@ -48,34 +59,45 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     dependency = service['dependency']   #other service topics
 
     for ser in dependency['platform']:
-        # deploy_util(ser,username)
-        pass
+        deploy_util(ser,username)
+        # pass
 
     for ser in dependency['bundle']:
         if dependency['bundle'][ser]=="True":
             subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
-    baseimage = 'FROM '+service["base"]+'\n'
+        else:
+            out=os.system('docker build -t '+ser+':latest '+ser+'/')
+            # logger.info("Build result: ",out)
+            if out!=0:
+                logger.error("Some error occured starting your service: "+ser)
+                os.remove('Dockerfile')
+                return
+            subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
+    baseimage = 'FROM '+service["base"]+':latest\n'
     df.write(baseimage)
     df.write('\n')
 
     if service["base"]=="alpine":
-        env = 'RUN apk update && apk add python3 py3-pip curl unzip'
+        env = 'RUN apk update && apk add python3 py3-pip curl unzip\n'
     else:
-        env = 'RUN apt-get update && apt-get install -y python3 python3-pip'
+        env = 'RUN apt-get update && apt-get install -y python3 python3-pip\n'
     df.write(env)
 
-    for package in pip:
-        cmd = 'RUN pip3 install ' + package + ' ; exit 0\n'
-        df.write(cmd)
-    df.write('\n')
+    for k,v in service["env"].items():
+        df.write("ENV "+k+"="+v+'\n')
+    
+    with open(fp+'/requirements.txt', 'w') as f:
+        for package in pip:
+            f.write(package+"\n")
 
 
-    file = 'ADD ' + filename + ' .\n'
-    df.write(file)
-    df.write('\n')
+    df.write('ADD . ./home\n') # COPY SRC
+    df.write('CMD cd home\n')
+    df.write('RUN pip3 install --no-cache-dir -r ./home/requirements.txt\n')
 
-    dependency_topics = (' ').join(dependency)
-    runcmd = 'ENTRYPOINT python3 -u ' + filename + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) + " " + dependency_topics
+
+    # keyword_args = (' ').join(dependency)
+    runcmd = 'ENTRYPOINT python3 -u /home/' + filename + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) # + " " + keyword_args
     df.write(runcmd.rstrip())
     df.close()
 
@@ -85,8 +107,8 @@ def deploy_util(app_name,username):
     if not found:
         return {"status":0,"message":"Not allowed"}
     # 2 fetch code artifacts
-    download_zip(username.lower(),app_name+".zip")
-    file_path = '../'+username.lower()+'/'+app_name
+    # download_zip(username.lower(),app_name+".zip")
+    file_path = '../uploads/'+username.lower()+'/'+app_name
     with open(file_path+'/appmeta.json') as f:
         configs = json.load(f)
 
@@ -96,68 +118,71 @@ def deploy_util(app_name,username):
     with open(file_path+'/sensor.json') as f:
         sensors = json.load(f)
     
-    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"]},sensors["sensor_instance_info"],controllers["controller_instance_info"],username)
+    sensor_list = [s["sensor_instance_type"] for s in sensors["sensor_instance_info"]]
+    controller_list = [s["controller_instance_type"] for s in controllers["controller_instance_info"]]
+    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"], "env":configs["env"]},sensor_list,controller_list,username)
     # 3 sensor binding
     # TBD by sensor manager after integration
-    for k,v in configs["sensors"].items():
-        threading.Thread(target=produce, args=(k,v,)).start()
+    for item in sensors["sensor_instance_info"]:
+        threading.Thread(target=produce, args=(item["sensor_instance_type"],item["rate"],)).start()
 
     # 4 build and deploy
     fp = app_name+"_vol_"+str(uuid.uuid1())
     os.mkdir(fp)
     #'" + fp +"'
-    print('docker build -t '+app_name+':latest ' + file_path +'/')
-    out=os.system('docker build -t '+app_name+':latest ' + file_path +'/')
+    ver = "latest" if (configs["version"]=="") else str(configs["version"])
+    logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
+    out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/')
     # print("Build result: ",out)
     if out!=0:
-        return flask.jsonify({"status":0,"message":"Failed build due to invalid configs"})
-    if found["usertype"] == 'admin': 
+        return {"status":0,"message":"Failed build due to invalid configs"}
+    if username == '__admin' or True: 
         container_name = app_name
     else:
-        return flask.jsonify({"status":0,"message":"Invalid user"})
+        return {"status":0,"message":"Invalid user"}
     
     os.system("docker rm " + container_name)
     
     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
 
     # execute the command and capture its output
-    # result = subprocess.run("docker run -d -v runtime_special:/home --name=special special", stdout=subprocess.PIPE, shell=True)
+    result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
     result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
-    print("Docker run status ",output)
+    logger.info("Docker run status %s",output)
 
     # _,stdout,stderr=os.system("docker ps -aqf 'name="+ container_name+"'")
     result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
-    output = result.stdout.decode()
-    if "runtime" in db.list_collection_names():
+    output = result.stdout.decode()[:-1]
+    if "app_runtimes" in db.list_collection_names():
         print("The collection already exists.")
     else:
         # Create the collection
-        collection = db.create_collection("runtime")
-    collection = db["runtime"]
-    mydata = {"node_id": output, "app": app_name, "deployed_by":username}
+        collection = db.create_collection("app_runtimes")
+    collection = db["app_runtimes"]
+    mydata = {"node_id": output, "app": app_name, "deployed_by":username, "volume":fp}
 
     collection.insert_one(mydata)
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
 def stop_util(app_name,username):
     query = {"app": app_name, "deployed_by": username, "status": True}    
-    results = db["runtime"].find(query)
+    results = db["app_runtimes"].find(query)
     for result in results:
         app_name = result.get("app")        
         if app_name:
             res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
             output = res.stdout.decode()
             print("Docker run status ",output)
-            db["runtime"].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
+            db["app_runtimes"].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
             return output
     return "No app found running"
     
 
 def get_services(username):
     query = {"deployed_by" : username}    
-    results = db["runtime"].find(query)
+    results = db["app_runtimes"].find(query)
     app_names = []
     for result in results:        
         app_name = result.get("app")
