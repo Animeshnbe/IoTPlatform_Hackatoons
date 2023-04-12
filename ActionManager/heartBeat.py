@@ -4,14 +4,16 @@ import datetime
 from time import sleep
 import threading
 from kafkautilities import kafka_consume, kafka_produce
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 # kafkaIPPort = '52.15.89.83:9092'
 # producer = KafkaProducer(bootstrap_servers=kafkaIPPort,
 #                          value_serializer=lambda v: json.dumps(v).encode('utf-8')
 #                          )
 
-kafka_ip = "10.2.135.170"
-kafka_port = "9092"
+kafka_ip = os.getenv("kafka_ip")
+kafka_port = os.getenv("kafka_port")
 
 
 def heart_beat(module_name):

@@ -10,23 +10,28 @@ from notificationUtility import send_email
 import configparser
 from kafkautilities import kafka_consume, kafka_produce
 from mongo_utility import MongoUtility
+from dotenv import load_dotenv
+import os
+from loggingUtility import logger_func
 
+logger = logger_func()
+load_dotenv()
 # Config file parser
-parser = configparser.RawConfigParser(allow_no_value=True)
-CONFIGURATION_FILE = "settings.conf"
-parser.read([CONFIGURATION_FILE])
+# parser = configparser.RawConfigParser(allow_no_value=True)
+# CONFIGURATION_FILE = "settings.conf"
+# parser.read([CONFIGURATION_FILE])
 
 result = []
 # mongo_port = int(parser.get("MONGO", "mongo_port"))
 # mongo_host = parser.get("MONGO", "mongo_host")
-mongo_port = 27017
-mongo_host = "localhost"
+mongo_port = os.getenv("mongo_port")
+mongo_host = os.getenv("mongo_host")
 #
 # kafka_port = parser.get("KAFKA", "kafka_port")
 # kafka_ip = parser.get("KAFKA", "kafka_ip")
 # kafka_ip = "redpanda-0"
-kafka_ip = "10.1.38.226"
-kafka_port = "9092"
+kafka_ip = os.getenv("kafka_ip")
+kafka_port = os.getenv("kafka_port")
 # kafkaPort = "9092"
 # kafkaAddress = "192.168.43.219:{}".format(kafkaPort)  # ProducerIP : ProducerPort
 kafkaAddress = kafka_ip + ":" + kafka_port
@@ -56,12 +61,14 @@ def helper_function(user_id, device_id, new_value):
     try:
         # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
         message = dict(user_id=user_id, device_id=device_id, new_value = new_value)
-        topic = "action_device"
+        topic = os.getenv("action_device")
         # print("kafka_ip : ", kafka_ip)
         # print("kafka_port : ", kafka_port)
         # print("topic : ", topic)
         # print("message : ", message)
+        
         kafka_produce(kafka_ip, kafka_port, topic, message)
+        logger.info("Message : "+" send request action manager to sensor manager " + str(message))
         current_timestamp = datetime.now()
         message["current_timestamp"] = current_timestamp
         mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
@@ -72,6 +79,7 @@ def helper_function(user_id, device_id, new_value):
 
 
 def send_data_to_sensor(host_topic, message):
+   
     for i in host_topic:
         temp = i.split(' ')
         ip = temp[0]
@@ -94,6 +102,7 @@ def listening_to_sensor_manager():
 def action_manager_request_handler(input_json):
     try:
         print(input_json)
+        logger.info("Message : "+" got request from user to action manager " + str(input_json))
         user_id = input_json.get("user_id", "")
         new_value = input_json.get("new_value", "None")
         device_id = input_json.get("device_id", "")
