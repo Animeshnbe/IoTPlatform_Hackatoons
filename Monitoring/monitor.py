@@ -40,7 +40,6 @@ mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
 
 def fetch_status():
     for message in monitor():
-        print("Message : ", message)
         logger.info("Message : " + str(message))
         module_dict[message['moduleName']] = message['currentTime']
 
@@ -56,25 +55,24 @@ def fetch_module_status():
     # for message in monitor():
     #     module_dict[message['moduleName']] = message['currentTime']
 
-    print("Inside fetch_module_status")
+    # print("Inside fetch_module_status")
     down = []
     # current_time = datetime.datetime.utcnow()
-    print(module_dict)
+    # print(module_dict)
 
     while True:
         if len(module_dict) > 0:
             for module in module_dict.keys():
                 current_time = datetime.datetime.utcnow()
                 date_time_obj = datetime.datetime.strptime(module_dict[module], '%Y-%m-%d %H:%M:%S.%f')
-                print("current_time : ", current_time)
-                print("date_time_obj : ", date_time_obj)
+                logger.info("current_time : " + str(current_time))
+                # print("date_time_obj : ", date_time_obj)
                 diff = (current_time - date_time_obj).total_seconds()
-                print("Difference:", diff)
+                logger.info("Monitor time Difference:" + str(diff))
                 if diff > threshold:
                     if module in down:
                         continue
                     else:
-                        print(module + " down")
                         module_status[module] = 'down'
                         obj = SSHUtil()
                         # a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
@@ -87,7 +85,7 @@ def fetch_module_status():
                     module_status[module] = 'up'
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
                 json_data = {'status': module_status[module]}
-                print("JSON TYPE : ", type(json_data))
+                logger.info("JSON TYPE : "+str(json_data))
                 # json_data = json.dumps(json_data)
                 # json_data = json.loads(json_data)
 
@@ -98,7 +96,7 @@ def fetch_module_status():
 
 def node_monitoring():
     try:
-        print("Hello")
+        # print("Hello")
         send_logs_thread = threading.Thread(target=fetch_module_status)
         send_logs_thread.daemon = True
         send_logs_thread.start()
