@@ -128,6 +128,8 @@ def deploy_util(app_name,username,port=None):
     ssh.exec_command("mkdir -p uploads/"+app_name.lower())
     ftp_client=ssh.open_sftp()
     ftp_client.put("m_init.py","./uploads/"+app_name.lower()+"/init.py")
+    # Replace the foll. with sensor manager caller
+    ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
     if port is not None:
         if "admin" not in found.role:
             return {"status":0, "message":"Starting service not allowed"}
@@ -138,7 +140,7 @@ def deploy_util(app_name,username,port=None):
         ftp_client.put("../uploads/"+username+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
     ftp_client.close()
     ssh.exec_command("cd uploads/"+app_name.lower())
-    _, stdout, stderr = ssh.exec_command("python3 init.py")
+    _, stdout, stderr = ssh.exec_command("python3 init.py "+app_name.lower()+" "+username+" "+configs["KAFKA_URI"])
     result = json.loads(stdout.read().decode())
     if result['status']==1:
         if port is not None:

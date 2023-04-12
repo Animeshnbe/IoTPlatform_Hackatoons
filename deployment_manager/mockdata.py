@@ -14,6 +14,7 @@ configs = config['local']
 IP = configs["KAFKA_URI"]
 
 def create_topic(name,part=1):
+    # print(IP)
     admin = KafkaAdminClient(bootstrap_servers=[IP])
     try:
         demo_topic = NewTopic(name=name, num_partitions=part, replication_factor=1)
@@ -37,19 +38,21 @@ def create_topic(name,part=1):
 #         sleep(1)
 
 def produce(sensor,rate,instance=None):
-    df = pd.read_csv("../data/"+sensor+".csv")
+    # df = pd.read_csv("../data/"+sensor+".csv")
 
     create_topic(sensor)
     producer = KafkaProducer(
         bootstrap_servers=[IP],
         value_serializer=lambda m: json.dumps(m).encode('ascii'))
-    for _,row in df.iterrows():
+    # for _,row in df.iterrows():
+    while True:
         if instance is None:
             # call_sensor_instance
-            producer.send(sensor, key=None,value=row.to_dict())
+            producer.send(sensor, key=None,value={"content":random.randint(1,100)})
         else:
-            producer.send(sensor, key=instance,value=row.to_dict())
+            # producer.send(sensor, key=instance,value=row.to_dict())
+            pass
         sleep(rate)
 
 if __name__=='__main__':
-    produce("thermometer",0.1)
+    produce("neuter",0.1)

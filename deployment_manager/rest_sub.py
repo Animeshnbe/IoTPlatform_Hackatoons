@@ -25,15 +25,17 @@ print(res)
 # Subscribe
 res = requests.post(
     url=f"{base_uri}/consumers/test_group/instances/test_consumer2/subscription",
-    data=json.dumps({"topics": ["ac"]}),
+    data=json.dumps({"topics": ["neuter"]}),
     headers={"Content-Type": "application/vnd.kafka.v2+json"})
 
 # Consume
-res = requests.get(
-    url=f"{base_uri}/consumers/test_group/instances/test_consumer2/records",
-    params={"timeout":1000,"max_bytes":1000,"partition":0,"offset":1,},
-    headers={"Accept": "application/vnd.kafka.json.v2+json"}).json()
-print(res)
+while True:
+  res = requests.get(
+      url=f"{base_uri}/consumers/test_group/instances/test_consumer2/records",
+      params={"timeout":1000,"max_bytes":1000,"partition":0,"offset":1,},
+      headers={"Accept": "application/vnd.kafka.json.v2+json"}).json()
+  if res:
+    print(res)
 
 # # Commit
 # res = requests.post(
