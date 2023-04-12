@@ -7,32 +7,32 @@ import subprocess
 import zipfile
 import requests
 
-from mockdata import produce
+from mockdata import produce, create_topic
 
-import configparser
-config = configparser.ConfigParser()
-config.read('.env')
-configs = config['local']
+# import configparser
+# config = configparser.ConfigParser()
+# config.read('.env')
+# configs = config['local']
 
 def generate_docker(fp,service, sensor_topic, controller_topic, username):
-    df = open(fp+'/Dockerfile', 'w')
+    df = open(fp+'/scripts/Dockerfile', 'w')
     pip = service['requirements']
     filename = service['filename']
     
     dependency = service['dependency']   #other service topics
 
     for ser in dependency['platform']:
-        deploy_util(ser,username)
+        deploy_util(ser,username,)
         # pass
 
     for ser in dependency['bundle']:
-        if dependency['bundle'][ser]=="True":
+        if dependency['bundle'][ser]==True:
             subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
         else:
             out=os.system('docker build -t '+ser+':latest '+ser+'/')
             # logger.info("Build result: ",out)
             if out!=0:
-                logger.error("Some error occured starting your service: "+ser)
+                print("Some error occured starting your service: "+ser)
                 os.remove('Dockerfile')
                 return
             subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
@@ -47,9 +47,9 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write(env)
 
     for k,v in service["env"].items():
-        df.write("ENV "+k+"="+v+'\n')
+        df.write("ENV "+k+"="+str(v)+'\n')
     
-    with open(fp+'/requirements.txt', 'w') as f:
+    with open(fp+'/scripts/requirements.txt', 'w') as f:
         for package in pip:
             f.write(package+"\n")
 
@@ -65,66 +65,99 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.close()
 
 def fetch_n_map_sensors(sensors,controllers):
-    devices = requests.get("http://192.168.137.51:8890/").json()
+    # devices = requests.get("http://192.168.137.51:8890/").json()
+    with open("dummy.json", "r") as f:
+        devices = json.load(f)
+
+    ans = {"sensors":{},"controllers":{}}
+    # print(sensors)
+    # print([d["sensortype"] for d in devices])
     for sensor in sensors:
-        ["controller_instance_count"]
+        ans["sensors"][sensor["sensor_instance_type"]] = []
+        for device in devices:
+            if device["sensortype"]==sensor["sensor_instance_type"]:
+                ans["sensors"][sensor["sensor_instance_type"]].append(device["id"])
+            
+                # print(sensor["sensor_instance_type"]," LEFT = ",sensor["sensor_instance_count"])
+                if sensor["sensor_instance_count"]>0:
+                    sensor["sensor_instance_count"]-=1
+                    if sensor["sensor_instance_count"]==0:
+                        break
 
 
+    for sensor in controllers:
+        ans["controllers"][sensor["controller_instance_type"]] = []
+        for device in devices:
+            if device["sensortype"]==sensor["controller_instance_type"]:
+                ans["controllers"][sensor["controller_instance_type"]].append(device["id"])
+            if sensor["controller_instance_count"]>0:
+                sensor["controller_instance_count"]-=1
+                if sensor["controller_instance_count"]==0:
+                    break
 
-def check_request(worklist, consumer_group, base_uri, name="test"):  
-    res = requests.get("{base_uri}/topics").json()
-    for item in worklist["sensor"].values():
-        for topic in item:
-            if topic not in res:
+    return ans
+
+def check_request(fp, worklist, consumer_group, base_uri, name="test"):  
+    # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",worklist)
+    res = requests.get(f"http://{base_uri}/topics").json()
+
+    # print(base_uri, res)
+    for topiclist in worklist["sensors"].values():
+        for topic in topiclist:
+            if str(topic) not in res:
                 return 0
             
-    with open("data_adapter.py","w") as f:
+    print("work===========", str(worklist))
+    with open(fp+"/scripts/data_adapter.py","w") as f:
         f.write(f'''
-devices = {worklist}
+import requests
+import json
+        
+devices = {str(worklist)}
 def attach_sensors(names):
     # Register consumer
     res = requests.post(
-        url="{base_uri}/consumers/{consumer_group}",
+        url="http://{base_uri}/consumers/{consumer_group}",
         data=json.dumps({{
-            "name": {name},
+            "name": "{name}",
             "format": "json",
             "auto.offset.reset": "earliest",
             "auto.commit.enable": "false",
             "fetch.min.bytes": "1",
             "consumer.request.timeout.ms": "10000"
         }}),
-        headers={"Content-Type": "application/vnd.kafka.v2+json"}).json()
+        headers={{"Content-Type": "application/vnd.kafka.v2+json"}}).json()
     print(res)
 
     # Subscribe
     topics = []
     for name in names:
-        topics.extend(devices["sensor"][name])
+        topics.extend(devices["sensors"][name])
     res = requests.post(
-        url="{base_uri}/consumers/test_group/instances/"+name+"/subscription",
+        url="http://{base_uri}/consumers/{consumer_group}/instances/{name}/subscription",
         data=json.dumps({{"topics": topics}}),
         headers={{"Content-Type": "application/vnd.kafka.v2+json"}})
 
     # Consume
     while True:
         res = requests.get(
-            url=f"{base_uri}/consumers/test_group/instances/test_consumer2/records",
-            params={"timeout":1000,"max_bytes":100000,"partition":0,"offset":1,},
-            headers={"Accept": "application/vnd.kafka.json.v2+json"}).json()
+            url="http://{base_uri}/consumers/{consumer_group}/instances/{name}/records",
+            params={{"timeout":1000,"max_bytes":100000,"partition":0,"offset":1,}},
+            headers={{"Accept": "application/vnd.kafka.json.v2+json"}}).json()
         if res:
             yield res
 
 def send_controller(controller_name,action,instance=None):
     if instance==None:
-        for dev in devices["controller"][controller_name]:
-            requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":"{consumer_group.split('_')[0]}","new_value":action,"device_id":dev}})
+        for dev in devices["controllers"][controller_name]:
+            requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":{consumer_group.split('_')[0]},"new_value":action,"device_id":dev}})
     else:
-        requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":"{consumer_group.split('_')[0]}","new_value":action,"device_id":devices["controller"][controller_name][instance]}})
+        requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":{consumer_group.split('_')[0]},"new_value":action,"device_id":devices["controller"][controller_name][instance]}})
 
-''')
+        ''')
     
 def deploy_util(app_name,username,kafka):
-    os.chdir("../uploads/"+username)
+    # os.chdir("../uploads/"+username)
     with zipfile.ZipFile(app_name+".zip") as zip_file:
         zip_file.extractall(".")
 
@@ -144,19 +177,20 @@ def deploy_util(app_name,username,kafka):
     # 3 sensor binding
     # TBD by sensor manager after integration
 
-    # device_instance = fetch_n_map_sensors(sensors["sensor_instance_info"],controllers["controller_instance_info"])
+    device_instance = fetch_n_map_sensors(sensors["sensor_instance_info"],controllers["controller_instance_info"])
     
-    device_instance = {"sensor":{"temperature":[1,2,3],"humidity":[4],"brightness":[5,6]},
-                       "controller":{"temperature":[1],"brightness":[6]}}
+    # device_instance = {"sensors":{"temperature":[1,2,3],"humidity":[4],"brightness":[5,6]},
+    #                    "controllers":{"temperature":[1],"brightness":[6]}}
     
     # worklist = []
     for item in sensors["sensor_instance_info"]:
-        for instance in device_instance["sensor"][item["sensor_instance_type"]]:
+        for instance in device_instance["sensors"][item["sensor_instance_type"]]:
+            create_topic(instance)
             threading.Thread(target=produce, args=(instance,item["rate"],)).start()
             # worklist.append({"type":"sensor","name":item,"device_id":instance})
     
     # build adapter
-    check_request(device_instance,username+"_"+app_name,kafka)
+    check_request(file_path,device_instance,username+"_"+app_name,kafka)
 
     # 4 build and deploy
     fp = app_name+"_vol_"+str(uuid.uuid1())
@@ -164,7 +198,7 @@ def deploy_util(app_name,username,kafka):
     #'" + fp +"'
     ver = "latest" if (configs["version"]=="") else str(configs["version"])
     # logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
-    out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/')
+    out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/scripts')
     # print("Build result: ",out)
     if out!=0:
         return {"status":0,"message":"Failed build due to invalid configs"}
@@ -186,7 +220,7 @@ def deploy_util(app_name,username,kafka):
     output = result.stdout.decode()[:-1]
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
-print(deploy_util(sys.argv[1],sys.argv[2],sys.argv[3]),end="")
+print(deploy_util("special","ashish","192.168.137.51:18082"),end="")
 
 #### ONE TIME TESTING
 # download_zip("ashish","special.zip")

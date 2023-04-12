@@ -1,7 +1,7 @@
 import requests
 import json
 
-base_uri = "http://localhost:18082"
+base_uri = "http://192.168.137.51:18082"
 def pretty(text):
   print(json.dumps(text, indent=2))
   

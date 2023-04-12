@@ -40,7 +40,7 @@ def create_topic(name,part=1):
 def produce(sensor,rate,instance=None):
     # df = pd.read_csv("../data/"+sensor+".csv")
 
-    create_topic(sensor)
+    # create_topic(sensor)
     producer = KafkaProducer(
         bootstrap_servers=[IP],
         value_serializer=lambda m: json.dumps(m).encode('ascii'))
