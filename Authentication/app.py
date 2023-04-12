@@ -3,60 +3,22 @@ from views.global_ldap_authentication import *
 from forms.LoginForm import *
 from flask_cors import CORS, cross_origin
 from flask_session import Session
-from itsdangerous import URLSafeTimedSerializer
-
-# app.secret_key = "testing"
-
-# client = pymongo.MongoClient(host="localhost", port=27017)
-
-
+import developer
+import authentication
+import platformAdmin
 
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-@app.route('/login', methods=['GET','POST'])
-def index():
+# app.secret_key = "testing"
 
-    # initiate the form..
-    form = LoginValidation()
+# client = pymongo.MongoClient(host="localhost", port=27017)
 
-    if request.method in ('POST') :
-        # login_id = form.user_name_pid
-        login_id = request.form['user_name_pid']
-        # print(login_id)
-        # login_password = form.user_pid_Password
-        login_password = request.form['user_pid_Password']
-        # print(login_password)
-
-        # create a directory to hold the Logs
-        login_msg = global_ldap_authentication(login_id, login_password)
-
-        # validate the connection
-        if login_msg == "Success":
-            success_message = f"*** Authentication Success "
-            session["name"] = request.form.get("user_name_pid")
-            return redirect("/")
-
-        else:
-            error_message = f"*** Authentication Failed - {login_msg}"
-            return render_template("error.html", error_message=str(error_message))
-
-    return render_template('login.html', form=form)
-
-@app.route("/logout")
-def logout():
-    session["name"] = None
-    return redirect("/")
- 
-
-@app.route('/developerHome', methods=['GET','POST'])
-def developerHome():
-    # if not session.get("name"):
-    #     return redirect("/login")
-    return render_template('developerHome.html')
-
+app.register_blueprint(developer.developer)
+app.register_blueprint(authentication.authentication)
+app.register_blueprint(platformAdmin.platformAdmin)
 
 @app.route('/')
 def home():
@@ -80,4 +42,7 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(debug=True,port=5005)
+    app.run(host="0.0.0.0",debug=True,port=5005)
+
+
+import developer

@@ -10,13 +10,14 @@ body {
     width: 100%;
 }
 .card2 {
+    
+    /* min-width: 100em; */
     margin: 0;
     margin-top: 1%;
-    /* min-width: 100em; */
     display: flex;
     flex-direction: row;
+    /* justify-content: center; */
 }
-
 .card21 {
     display: flex;
     flex-direction: row;
@@ -32,14 +33,19 @@ body {
     justify-content: right;
     padding: 5px;
 }
-.card3 {
-    max-width: 28%;
+.startstopbtn {
+    margin-right: auto;
     display: flex;
-    padding-top: 5%;
+    width: 80%;
+    justify-content: right;
+    padding: 5px;
 }
+.sensorName {
+    width: 20%;
+}
+
 .card4 {
-    max-width: 71%;
-    margin-left: 1%;
+    max-width: 100%;
     padding-top: 2%;
 }
 .card5 {
@@ -88,6 +94,10 @@ div.box2 {
     padding: 30px;
 }
 
+.cardHeader {
+    display: flex;
+}
+
 .buttonUpload {
     background-color: darkslategray;
     color: white;
@@ -109,9 +119,22 @@ div.box2 {
     transition: 0.5s;
 }
 
-.btn
+.btn1
 {
     background-color: darkslategray;
+    color: white;
+    width: 100%;
+}
+
+.startbtn
+{
+    background-color: darkgreen;
+    color: white;
+    width: 100%;
+}
+.stopbtn
+{
+    background-color: red;
     color: white;
     width: 100%;
 }
@@ -128,5 +151,8 @@ div.box2 {
     display: flex;
     justify-content: center;
     margin: 0;
+}
 
+.btn2 {
+    margin-right: 5px;
 }

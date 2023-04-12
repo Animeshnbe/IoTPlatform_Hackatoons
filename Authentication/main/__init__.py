@@ -33,7 +33,6 @@ app = Flask(__name__,
             template_folder="../templates",static_folder="../static"
             )
 
-
 bootstrap = Bootstrap(app)
 app.config.from_object('settings')
 app.secret_key = os.urandom(24)

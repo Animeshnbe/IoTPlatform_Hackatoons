@@ -1,7 +1,5 @@
-from ldap3 import Server, Connection, ALL, SUBTREE,SAFE_SYNC, SIMPLE
-from ldap3.core.exceptions import LDAPException, LDAPBindError
+from ldap3 import Server, Connection, ALL
 import ssl
-from ldap3.core.tls import Tls
 
 
 def global_ldap_authentication(user_name, user_pwd):

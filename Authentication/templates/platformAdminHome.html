@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;900&display=swap" rel="stylesheet">
     <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
-    <link rel="stylesheet" href='/static/developerHome.css'>
+    <link rel="stylesheet" href='/static/platformAdmin.css'>
 </head>
 
 <body>
@@ -19,65 +19,78 @@
                 <h2 class="welcomeheading">Welcome Platform Admin</h2>
             </div>
             <div class="card22">
+                <a class="btn2" href=http://10.42.0.208:8046/api/ui><button class="btn btn1">Add Sensor</button></a>
                 <a href=logout><button class="btn btn1">Logout</button></a>
             </div>
-            
-        </div>
-        <div class="row">
-            <div class="card card3">
-                <p class="uploadHeading">Upload Zip File</p>
-                <hr />
-                <form action="http://192.168.123.70:15005/upload_file" method="POST" enctype="multipart/form-data">
-                    <input type = "file" name = "file" />
-                    <div class="uploadbtndiv"><input type = "submit" class="buttonUpload"/></div>
-                </form>
-                <!-- <div class="uploadbtndiv"><button class="buttonUpload">Upload</button></div> -->
 
-            </div>
+        </div>
+        <!-- <div class="row">
+
             <div class="card card4">
-                <h2 class="permSensorHeading">Sensors with Permission</h2>
+                <h2 class="permSensorHeading">Sensors</h2>
                 <hr />
                 <div class="box2">
+                    
                     <div class="card">
-                        <div class="card-header">
-                            <h4>Sensor Name</h4>
+                        <div class="card-header cardHeader">
+                            <div class="sensorName">
+                                <h4>Sensor Name</h4>
+                            </div>
+                            <div class="startstopbtn">
+                                <a class="btn2" href=AddSensor><button class="btn startbtn">Start</button></a>
+                                <a  href=AddSensor><button class="btn stopbtn">Stop</button></a>
+                            </div>
                         </div>
                         <div class="card-body">
                             <blockquote class="blockquote mb-0">
                                 <p>Details</p>
-                                <footer class="blockquote-footer">detials <cite title="Source Title"></cite></footer>
+                                <footer class="blockquote-footer">details <cite title="Source Title"></cite></footer>
                             </blockquote>
                         </div>
                     </div>
+                    
                     <div class="card">
-                        <div class="card-header">
-                            <h4>Sensor Name</h4>
+                        <div class="card-header cardHeader">
+                            <div class="sensorName">
+                                <h4>Sensor Name</h4>
+                            </div>
+                            <div class="startstopbtn">
+                                <a class="btn2" href=AddSensor><button class="btn startbtn">Start</button></a>
+                                <a  href=AddSensor><button class="btn stopbtn">Stop</button></a>
+                            </div>
                         </div>
                         <div class="card-body">
                             <blockquote class="blockquote mb-0">
                                 <p>Details</p>
-                                <footer class="blockquote-footer">detials <cite title="Source Title"></cite></footer>
+                                <footer class="blockquote-footer">details <cite title="Source Title"></cite></footer>
                             </blockquote>
                         </div>
                     </div>
+
                     <div class="card">
-                        <div class="card-header">
-                            <h4>Sensor Name</h4>
+                        <div class="card-header cardHeader">
+                            <div class="sensorName">
+                                <h4>Sensor Name</h4>
+                            </div>
+                            <div class="startstopbtn">
+                                <a class="btn2" href=AddSensor><button class="btn startbtn">Start</button></a>
+                                <a  href=AddSensor><button class="btn stopbtn">Stop</button></a>
+                            </div>
                         </div>
                         <div class="card-body">
                             <blockquote class="blockquote mb-0">
                                 <p>Details</p>
-                                <footer class="blockquote-footer">detials <cite title="Source Title"></cite></footer>
+                                <footer class="blockquote-footer">details <cite title="Source Title"></cite></footer>
                             </blockquote>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+        </div> -->
         <div class="row">
             <div class="card card5">
-                <h2 class="permSensorHeading">Your Services</h2>
+                <h2 class="permSensorHeading">Services</h2>
                 <hr />
                 <div class="box2">
                     <div class="card">
