@@ -1,10 +1,15 @@
 import os
 import yaml
-
+import pymongo
+import flask
 import json
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 def flow(file_path):
-
     with open(file_path, "r") as f:
         data = json.load(f)
 
@@ -52,38 +57,75 @@ def flow(file_path):
 
         ordered_dict[ordered[0]["id"]] = ordered
         
-    print(json.dumps(ordered_dict))
+    # print(json.dumps(ordered_dict))
+    return ordered_dict
 
-flow("flows.json")
-
-num_apps = 3 
-
-services = {}
-for i in range(1, num_apps+1):
-    app_name = f'app{i}'
-    services[app_name] = {
-        'build': {
-            'context': f'./{app_name}',
-        },
-        'ports':[
-            f'{5000+i}:{5000+i}'
-        ],
-        'networks':[
-            'my-network'
-        ]
+def get_service_port(service_name):
+    all_ports = {
+        "app1":"5001",
+        "app2":"5002",
+        "app3":"5003"
     }
+    return all_ports[service_name]
 
-networks = {
-    'my-network': {
-                'driver': 'bridge'
-            }
-}
+if __name__ == '__main__':
+    client = pymongo.MongoClient(os.getenv("MONGO_URI"))
+    # db = client['IAS_Global']
+    app = flask.Flask('deploymgr')
+    @app.route('/accept_workflow', methods=['POST', 'GET'])
+    def test():
+        print("Json ",flask.request.get_json())
+        # print(db["app_runtimes"].find_one({"app":"flasker"}))
+        try:
+            ordered_dict = flow("../flows/flows.json")
 
-compose_data = {
-    'version': '3',
-    'services': services,
-    'networks': networks,
-}
+            
+            for id,flow in ordered_dict.items():
+                services = {}
+                flag = False
+                apps = []
+                for item in flow:
+                    if item["type"]=="http request":
+                        flag = True
+                        app_name = item["name"]
+                        port = get_service_port(app_name)
+                        services[app_name] = {
+                            'build': {
+                                'context': f'./{app_name}',
+                            },
+                            'ports':[
+                                port+":"+port
+                            ],
+                            'networks':[
+                                'network'+id
+                            ]
+                        }
+                        apps.append(app_name)
 
-with open('docker-compose.yml', 'w') as f:
-    yaml.dump(compose_data, f, sort_keys=False)
+                if flag:
+                    networks = {
+                        'network'+id: {
+                                    'driver': 'bridge'
+                                }
+                    }
+
+                    compose_data = {
+                        'version': '3',
+                        'services': services,
+                        'networks': networks,
+                    }
+
+                    with open('docker-compose.yml', 'w') as f:
+                        yaml.dump(compose_data, f, sort_keys=False)
+
+                    os.mkdir("../flows/flow_"+id)
+                    # put the compose file here along with the folders of the required apps in list
+                    # run the compose command
+
+            return flask.jsonify({"status":1})
+        except:
+            return flask.jsonify({"status":0, "message":"Could not start services in your workflow"})
+    
+    app.run(host = '0.0.0.0',port = 8886, threaded=True)
+
+
