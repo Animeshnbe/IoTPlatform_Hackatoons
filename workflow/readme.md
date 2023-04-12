@@ -1,0 +1,1 @@
+** Always mkdir /flows in the machine attach /flows as volume to the container of both node red and workflow while running **

@@ -3,13 +3,16 @@ import yaml
 import pymongo
 import flask
 import json
+import shutil               #to move file
+import paramiko
+import subprocess
 from os.path import join, dirname
 from dotenv import load_dotenv
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-def flow(file_path):
+def create_flow(file_path):
     with open(file_path, "r") as f:
         data = json.load(f)
 
@@ -64,7 +67,9 @@ def get_service_port(service_name):
     all_ports = {
         "app1":"5001",
         "app2":"5002",
-        "app3":"5003"
+        "app3":"5003",
+        "app4":"5004",
+        "app5":"5005"
     }
     return all_ports[service_name]
 
@@ -74,16 +79,16 @@ if __name__ == '__main__':
     app = flask.Flask('deploymgr')
     @app.route('/accept_workflow', methods=['POST', 'GET'])
     def test():
-        print("Json ",flask.request.get_json())
+        # print("Json ",flask.request.get_json())
         # print(db["app_runtimes"].find_one({"app":"flasker"}))
         try:
-            ordered_dict = flow("../flows/flows.json")
+            ordered_dict = create_flow("../flows/flows.json")
 
             
             for id,flow in ordered_dict.items():
                 services = {}
                 flag = False
-                apps = []
+                # apps = []
                 for item in flow:
                     if item["type"]=="http request":
                         flag = True
@@ -91,7 +96,7 @@ if __name__ == '__main__':
                         port = get_service_port(app_name)
                         services[app_name] = {
                             'build': {
-                                'context': f'./{app_name}',
+                                'context': f'../../services/{app_name}',
                             },
                             'ports':[
                                 port+":"+port
@@ -100,7 +105,7 @@ if __name__ == '__main__':
                                 'network'+id
                             ]
                         }
-                        apps.append(app_name)
+                        # apps.append(app_name)
 
                 if flag:
                     networks = {
@@ -119,11 +124,25 @@ if __name__ == '__main__':
                         yaml.dump(compose_data, f, sort_keys=False)
 
                     os.mkdir("../flows/flow_"+id)
-                    # put the compose file here along with the folders of the required apps in list
+                    # put the compose file here
+                    shutil.move("docker-compose.yml", "../flows/flow_"+id)
                     # run the compose command
+                    # ssh = paramiko.SSHClient()
+                    # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    # ssh.connect(hostname=os.getenv("NODE_RED_IP"),username=os.getenv("username"),password=os.getenv("password"))
+                    # ##### CHANGE AS RE
+                    # ssh.exec_command("cd ../flows/flow_"+id)
+                    # _,res,_ = ssh.exec_command("docker compose up")
+                    os.chdir("../flows/flow_"+id)
+                    res = subprocess.run("docker compose up", stdout=subprocess.PIPE, shell=True)           
+                    output = res.stdout.decode()[-1]
+                    # output = res.read().decode()
+                    print(output)
+                    break
 
             return flask.jsonify({"status":1})
-        except:
+        except Exception as ex:
+            print(ex)
             return flask.jsonify({"status":0, "message":"Could not start services in your workflow"})
     
     app.run(host = '0.0.0.0',port = 8886, threaded=True)
