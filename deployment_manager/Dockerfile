@@ -1,6 +1,6 @@
-FROM alpine:latest
+FROM python:3
 
-RUN apk update && apk add python3 py3-pip curl unzip
+RUN apt update && apt install curl unzip
 ADD . ./home
 RUN cd home && pip3 install --no-cache-dir -r /home/requirements.txt
 

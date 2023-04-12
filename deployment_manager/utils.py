@@ -25,11 +25,51 @@ config.read('.env')
 configs = config['local']
 
 from mockdata import produce
+from kafka import KafkaConsumer
 
 import pymongo
 client = pymongo.MongoClient(configs["MONGO_CONN_STRING"])
 # client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
 db = client['IAS_Global']
+
+from time import sleep
+
+deploy_requests = []
+
+def get_schedules(consumer):
+    # Consume messages from a topic
+    for message in consumer:
+        deploy_requests.append(message.value)
+
+def scheduler_consumer():
+    # while(1):
+    #     if len(deploy_requests)>0:
+    #         deploy_request = deploy_requests.pop(0)
+    #         print(deploy_request)
+    #         deploy_util(deploy_request['user'],deploy_request['appname'])
+    #     sleep(0.5)
+
+    # consumer = KafkaConsumer('sch_dep', bootstrap_servers=[configs['KAFKA_URI']],
+    #                             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
+
+
+    # t1 = threading.Thread(target = get_schedules, args=(consumer,))
+    # t1.start()
+    print(configs["KAFKA_URI"])
+    consumer = KafkaConsumer('sch_dep', bootstrap_servers=[configs["KAFKA_URI"]],
+                                value_deserializer=lambda x: json.loads(x.decode('utf-8')))
+
+    # consumer.seek(0,0)
+    print("Waiting...")
+    for message in consumer:
+        # topic_info = f"topic: {message.topic} ({message.partition}|{message.offset})"
+        # data = json.loads(message.value.decode('utf-8'))
+        # message_info = f"key: {message.key}, {data}"
+        # print(f"{topic_info}, {message_info}")
+        print(message.value)
+        m = message.value
+        deploy_util(m['user'],m['appname'])
+        # consumer.commit()
 
 def download_zip(container, zip_file_name,extract=False):
     logger.info("ARGS +++++ ",container,zip_file_name)
@@ -110,6 +150,7 @@ def deploy_util(app_name,username,port=None):
     # 1 verify user
     found = db['users'].find_one({'username':username})
     app_found = db['app_uploads'].find_one({'app':app_name})
+    print("Request received... ")
     if not found:
         return {"status":0,"message":"No such user"}
     if not app_found:
@@ -117,8 +158,9 @@ def deploy_util(app_name,username,port=None):
     elif 'admin' not in found["role"] and app_found["owner"]!=username:
         return {"status":0,"message":"Invalid user"}
     
+    print("Deploying... ")
     username = app_found["owner"].lower()
-    resp = requests.post("http://nodemgr:8887",json={"port":port}).json()
+    resp = requests.post("http://node_mgr:8887",json={"port":port}).json()
     if resp["msg"]!="OK":
         return {"status":0,"message":resp["msg"]}
     
@@ -127,7 +169,7 @@ def deploy_util(app_name,username,port=None):
     ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
     ssh.exec_command("mkdir -p uploads/"+app_name.lower())
     ftp_client=ssh.open_sftp()
-    ftp_client.put("m_init.py","./uploads/"+app_name.lower()+"/init.py")
+    ftp_client.put("init.py","./uploads/"+app_name.lower()+"/init.py")
     # Replace the foll. with sensor manager caller
     ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
     if port is not None:

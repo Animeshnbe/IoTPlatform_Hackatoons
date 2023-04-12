@@ -2,6 +2,7 @@ from kafka import KafkaProducer
 import json
 import datetime
 import threading
+from time import sleep
 
 import configparser
 config = configparser.ConfigParser()
@@ -22,3 +23,4 @@ def heart_beat(module_name):
             'currentTime': curr_time
         }
         producer.send('module_heart_rate', key=None,value=message)
+        sleep(5)

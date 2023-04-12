@@ -1,6 +1,6 @@
 import flask
 import threading
-from utils import deploy_util, stop_util, restart_util, get_services
+from utils import scheduler_consumer, deploy_util, stop_util, restart_util, get_services
 from heartBeat import heart_beat
 
 def req_handler(app):
@@ -55,6 +55,7 @@ if __name__ == '__main__':
     t = threading.Thread(target=heart_beat, args=("deployment_manager",))
     t.daemon = True
     t.start()
-    req_handler(app)
-
-	
+    t2 = threading.Thread(target=req_handler, args=(app,))
+    t2.daemon = True
+    t2.start()
+    scheduler_consumer()
