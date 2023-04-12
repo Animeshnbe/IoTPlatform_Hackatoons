@@ -6,6 +6,7 @@ import threading
 from kafkautilities import kafka_consume, kafka_produce
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 # kafkaIPPort = '52.15.89.83:9092'
 # producer = KafkaProducer(bootstrap_servers=kafkaIPPort,
@@ -14,6 +15,7 @@ load_dotenv()
 
 kafka_ip = os.getenv("kafka_ip")
 kafka_port = os.getenv("kafka_port")
+monitor_heart_rate_topic = os.getenv("monitor_heart_rate_topic")
 
 
 def heart_beat(module_name):
@@ -24,7 +26,7 @@ def heart_beat(module_name):
             'currentTime': curr_time
         }
         print("message : ", message)
-        kafka_produce(kafka_ip, kafka_port, "module_heart_rate", message)
+        kafka_produce(kafka_ip, kafka_port, monitor_heart_rate_topic, message)
         # producer.send('monitor', message)
         sleep(5)
 
