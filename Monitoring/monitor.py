@@ -41,7 +41,7 @@ mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
 def fetch_status():
     for message in monitor():
         print("Message : ", message)
-        logger.info("Message : "+str(message))
+        logger.info("Message : " + str(message))
         module_dict[message['moduleName']] = message['currentTime']
 
 
@@ -106,6 +106,7 @@ def node_monitoring():
     except Exception as e:
         print(e)
 
+
 # def fetch_nodes_status():
 #     try:
 #         kafka_consumer = KafkaConsumer(bootstrap_servers=[kafkaAddress, kafkaAddress1], auto_offset_reset='latest',
@@ -139,21 +140,16 @@ def node_monitoring():
 #         print(e)
 #
 #
-# def send_node_modules():
-#     mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-#     record = mongo_utility.find_all(database_name, collection_name)
-#     data = {}
-#     server_load = []
-#
-#     for x in record:
-#         if time.time() - x['timestamp'] < 3:
-#             x["ip"] = x['nodeID'].split(':')[0]
-#             x["port"] = int(x['nodeID'].split(':')[1])
-#             x.pop('nodeID')
-#             x.pop('timestamp')
-#             server_load.append(x)
-#
-#     data["n_servers"] = len(server_load)
-#     data["server_load"] = server_load
-#     res = json.dumps(data, default=json_util.default)
-#     return res
+def send_node_modules():
+    record = mongo_utility.find_all(database_name, collection_name)
+    data = {}
+    server_load = []
+
+    for x in record:
+        if x["status"] == "up":
+            server_load.append(x)
+
+    data["n_servers"] = len(server_load)
+    data["server_load"] = server_load
+    res = json.dumps(data, default=json_util.default)
+    return res
