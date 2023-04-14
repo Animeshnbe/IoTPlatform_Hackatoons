@@ -5,9 +5,8 @@ app = Flask(__name__)
 @app.route('/subtract', methods=['POST'])
 def subtract_numbers():
     data = request.json
-    num1 = data['num1']
-    num2 = data['num2']
-    result = num1 - num2
+    num1 = data['result']
+    result = num1 - 20
     return {'result': result}
 
 if __name__ == '__main__':

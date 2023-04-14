@@ -6,3 +6,4 @@ uploads/
 *.zip
 *.log
 __pycache__/
+deployer/

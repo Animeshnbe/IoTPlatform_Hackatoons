@@ -6,12 +6,12 @@ from kafka import KafkaAdminClient, KafkaProducer
 from kafka.admin import NewTopic
 from kafka.errors import TopicAlreadyExistsError, KafkaError
 import json
-import configparser
-config = configparser.ConfigParser()
-config.read('.env')
-configs = config['local']
+# import configparser
+# config = configparser.ConfigParser()
+# config.read('.env')
+# configs = config['local']
 
-IP = configs["KAFKA_URI"]
+IP = '10.2.133.182:19092' # configs["KAFKA_URI"]
 
 def create_topic(name,part=1):
     # print(IP)
@@ -55,4 +55,5 @@ def produce(sensor,rate,instance=None):
         sleep(rate)
 
 if __name__=='__main__':
-    produce("neuter",0.1)
+    # produce("sch_dep",0.1)
+    create_topic("hello")

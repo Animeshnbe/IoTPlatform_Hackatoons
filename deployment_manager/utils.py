@@ -7,6 +7,7 @@ import io
 import pymongo
 import paramiko
 import uuid
+import shutil
 import subprocess
 from azure.storage.blob import BlobServiceClient
 import zipfile
@@ -72,7 +73,7 @@ def scheduler_consumer():
         # consumer.commit()
 
 def download_zip(container, zip_file_name,extract=False):
-    logger.info("ARGS +++++ ",container,zip_file_name)
+    logger.info("ARGS +++++ %s %s",container,zip_file_name)
     connect_str = "DefaultEndpointsProtocol=https;AccountName=aman0ias;AccountKey=ejuMHDXoYsp4ktNpndJTqrC0QXgEi7DCv0cJiK94R6ZhMYZa+VmKnYcTNv3T6qIc/qoYnnZbGZPg+AStGotFJA==;EndpointSuffix=core.windows.net"
 
     container_name = container         #container name
@@ -149,41 +150,57 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
 def deploy_util(app_name,username,port=None):
     # 1 verify user
     found = db['users'].find_one({'username':username})
-    app_found = db['app_uploads'].find_one({'app':app_name})
+    app_found = db['app_uploads'].find_one({'filename':app_name})
     print("Request received... ")
     if not found:
         return {"status":0,"message":"No such user"}
     if not app_found:
         return {"status":0,"message":"No such app"}
-    elif 'admin' not in found["role"] and app_found["owner"]!=username:
+    elif 'admin' not in found["role"] and app_found["username"]!=username:
         return {"status":0,"message":"Invalid user"}
     
     print("Deploying... ")
-    username = app_found["owner"].lower()
-    resp = requests.post("http://node_mgr:8887",json={"port":port}).json()
+    username = app_found["username"].lower()
+    # same docker network as node manager
+    resp = requests.post("http://localhost:8887",json={"port":port}).json()
     if resp["msg"]!="OK":
         return {"status":0,"message":resp["msg"]}
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
-    ssh.exec_command("mkdir -p uploads/"+app_name.lower())
     ftp_client=ssh.open_sftp()
+    try:
+        ftp_client.stat("uploads/"+app_name.lower())
+        print(True)
+    except FileNotFoundError:
+        ssh.exec_command("mkdir -p uploads/"+app_name.lower())
     ftp_client.put("init.py","./uploads/"+app_name.lower()+"/init.py")
     # Replace the foll. with sensor manager caller
+    ftp_client.put("dummy.json","./uploads/"+app_name.lower()+"/dummy.json")
     ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
+    print("Placed starter files...")
     if port is not None:
         if "admin" not in found.role:
             return {"status":0, "message":"Starting service not allowed"}
+        shutil.make_archive(app_name, 'zip', app_name)
         ftp_client.put("../services/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+        os.remove("../services/"+app_name+".zip")
     else:
         # 2 fetch code artifacts
         download_zip(username,app_name+".zip")
+        print("Downloaded files...")
         ftp_client.put("../uploads/"+username+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+        print("Sent the app...")
     ftp_client.close()
-    ssh.exec_command("cd uploads/"+app_name.lower())
-    _, stdout, stderr = ssh.exec_command("python3 init.py "+app_name.lower()+" "+username+" "+configs["KAFKA_URI"])
+    ssh.exec_command("pip install requests")
+
+    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py "+app_name.lower()+" "+username+" "+configs["KAFKA_URI"])
+    print("SSH OUT>>>>>>>>>>>>>", stdout.read().decode())
+    print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
     result = json.loads(stdout.read().decode())
+    # shutil.copy
+    # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
         if port is not None:
             collection = "services"
@@ -355,5 +372,6 @@ def get_services(req):
     print(app_names)
 
 
-def test():
-    print("hello")
+if __name__=="__main__":
+    print(deploy_util("sample_app","Admin"))
+    # print("SSH OUT>>>>>>>>>>>>>", stdout.read().decode())

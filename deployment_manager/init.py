@@ -27,7 +27,11 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
 
     for ser in dependency['bundle']:
         if dependency['bundle'][ser]==True:
-            subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
+            if len(ser.split())>1:
+                x = ser[:ser.find(' ')]
+                subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+x)
+            else:
+                subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
         else:
             out=os.system('docker build -t '+ser+':latest '+ser+'/')
             # logger.info("Build result: ",out)
@@ -130,9 +134,11 @@ def attach_sensors(names):
     print(res)
 
     # Subscribe
-    topics = []
+    topics_raw = []
     for name in names:
-        topics.extend(devices["sensors"][name])
+        topics_raw.extend(devices["sensors"][name])
+
+    topics = [str(t) for t in topics_raw]
     res = requests.post(
         url="http://{base_uri}/consumers/{consumer_group}/instances/{name}/subscription",
         data=json.dumps({{"topics": topics}}),
@@ -145,6 +151,7 @@ def attach_sensors(names):
             params={{"timeout":1000,"max_bytes":100000,"partition":0,"offset":1,}},
             headers={{"Accept": "application/vnd.kafka.json.v2+json"}}).json()
         if res:
+            # print(res)
             yield res
 
 def send_controller(controller_name,action,instance=None):
@@ -173,6 +180,7 @@ def deploy_util(app_name,username,kafka):
     
     sensor_list = [s["sensor_instance_type"] for s in sensors["sensor_instance_info"]]
     controller_list = [s["controller_instance_type"] for s in controllers["controller_instance_info"]]
+    result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
     generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"], "env":configs["env"]},sensor_list,controller_list,username)
     # 3 sensor binding
     # TBD by sensor manager after integration
@@ -181,6 +189,7 @@ def deploy_util(app_name,username,kafka):
     
     # device_instance = {"sensors":{"temperature":[1,2,3],"humidity":[4],"brightness":[5,6]},
     #                    "controllers":{"temperature":[1],"brightness":[6]}}
+    print("Got current device ids: ",)
     
     # worklist = []
     for item in sensors["sensor_instance_info"]:
@@ -209,7 +218,6 @@ def deploy_util(app_name,username,kafka):
     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
 
     # execute the command and capture its output
-    result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
     result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
@@ -220,7 +228,7 @@ def deploy_util(app_name,username,kafka):
     output = result.stdout.decode()[:-1]
     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
-print(deploy_util("special","ashish","192.168.137.51:18082"),end="")
+print(deploy_util(sys.argv[1],sys.argv[2],sys.argv[3]),end="")
 
 #### ONE TIME TESTING
 # download_zip("ashish","special.zip")
