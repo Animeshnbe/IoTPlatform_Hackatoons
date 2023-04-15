@@ -27,19 +27,19 @@ def req_handler(app):
     def stop():
         req = flask.request.get_json()
         print("Json ",req)
-        stop_util(req['username'],req['service_name'], req['type'])
+        stop_util(req['username'],req['service_name'], req['service_type'])
 
     @app.route('/restart_service', methods=['POST'])
     def restart():
         req = flask.request.get_json()
         print("Json ",req)
-        restart_util(req['username'],req['service_name'], req['type'])
+        restart_util(req['username'],req['service_name'], req['service_type'])
 
     @app.route('/get_services', methods=['GET'])
     def get():
         req = flask.request.get_json()
         print("Json ",req)
-
+        # username in req
         get_services(req)
 
     @app.route('/test', methods=['POST'])

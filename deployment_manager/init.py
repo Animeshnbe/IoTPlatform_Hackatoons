@@ -61,7 +61,7 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write('ADD . ./home\n') # COPY SRC
     df.write('CMD cd home\n')
     df.write('RUN pip3 install --no-cache-dir -r ./home/requirements.txt\n')
-
+    df.write('EXPOSE '+service["port"]+'/tcp\n')
 
     # keyword_args = (' ').join(dependency)
     runcmd = 'ENTRYPOINT python3 -u /home/' + filename + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) # + " " + keyword_args
@@ -181,6 +181,9 @@ def deploy_util(app_name,username,kafka):
     sensor_list = [s["sensor_instance_type"] for s in sensors["sensor_instance_info"]]
     controller_list = [s["controller_instance_type"] for s in controllers["controller_instance_info"]]
     result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
+    result = result.stdout.decode()[:-1]
+    if "Error" in result and "already exists" not in result:
+        return {"status":0,"message":"Failed to create network for deployment"}
     generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"], "env":configs["env"]},sensor_list,controller_list,username)
     # 3 sensor binding
     # TBD by sensor manager after integration
@@ -218,7 +221,7 @@ def deploy_util(app_name,username,kafka):
     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
 
     # execute the command and capture its output
-    result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
+    result = subprocess.run("docker run -d -P --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
     # print("Docker run status %s",output)

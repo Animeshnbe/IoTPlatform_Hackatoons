@@ -147,17 +147,17 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write(runcmd.rstrip())
     df.close()
 
-def deploy_util(app_name,username,port=None):
+def deploy_util(app_name,username,port=None,app_type='app'):
     # 1 verify user
     found = db['users'].find_one({'username':username})
     app_found = db['app_uploads'].find_one({'filename':app_name})
     print("Request received... ")
     if not found:
         return {"status":0,"message":"No such user"}
-    if not app_found:
+    if app_type=='app' and not app_found:
         return {"status":0,"message":"No such app"}
-    elif 'admin' not in found["role"] and app_found["username"]!=username:
-        return {"status":0,"message":"Invalid user"}
+    # elif 'admin' not in found["role"] and app_found["username"]!=username:
+    #     return {"status":0,"message":"Invalid user"}
     
     print("Deploying... ")
     username = app_found["username"].lower()
@@ -359,7 +359,7 @@ def get_services(req):
     if user["role"]=="admin":
         results = db["services"].find()
     elif user["role"]=="app_admin":
-        query = {"deployed_by" : req["username"]}    
+        query = {"deployed_by" : req["username"]}
         results = db["app_runtimes"].find(query)
     else:
         query = {"type" : "open"}
