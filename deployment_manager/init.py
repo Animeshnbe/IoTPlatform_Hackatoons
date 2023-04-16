@@ -184,8 +184,9 @@ def deploy_util(app_name,username):
             zip_file.extractall(".")
 
     ver = "latest"
+    src = ""
+    file_path = app_name
     if args.app_type=='app':
-        file_path = app_name
         with open(file_path+'/configuration/appmeta.json') as f:
             configs = json.load(f)
 
@@ -203,7 +204,7 @@ def deploy_util(app_name,username):
             return {"status":0,"message":"Failed to create network for deployment"}
         ver = "latest" if (configs["version"]=="") else str(configs["version"])
     
-    if not os.path.exists(file_path+"/scripts/Dockerfile"):
+    if not os.path.exists(file_path+src+"/Dockerfile"):
         generate_docker(file_path,configs,sensor_list,controller_list,username)
         # 3 sensor binding
         # TBD by sensor manager after integration
@@ -226,14 +227,14 @@ def deploy_util(app_name,username):
 
         # 4 build and deploy
         # logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
-        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/scripts')
+        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +src)
         if out!=0:
             return {"status":0,"message":"Failed build due to invalid configs"}
         else:
             print("Build successful")
     
     elif len(subprocess.run("docker images "+app_name, stdout=subprocess.PIPE, shell=True).stdout.decode())<3:
-        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/scripts')
+        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +src)
         if out!=0:
             return {"status":0,"message":"Failed build due to invalid configs"}
         else:

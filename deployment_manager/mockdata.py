@@ -48,7 +48,7 @@ def produce(sensor,rate,ip=IP,instance=None):
     while True:
         if instance is None:
             # call_sensor_instance
-            producer.send(sensor, key=None,value={"content":random.randint(1,100)})
+            producer.send(str(sensor), key=None,value={"content":random.randint(1,100)})
         else:
             # producer.send(sensor, key=instance,value=row.to_dict())
             pass
