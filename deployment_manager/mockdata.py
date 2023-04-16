@@ -13,9 +13,9 @@ import json
 
 IP = '10.2.133.182:19092' # configs["KAFKA_URI"]
 
-def create_topic(name,part=1):
+def create_topic(name,ip=IP,part=1):
     # print(IP)
-    admin = KafkaAdminClient(bootstrap_servers=[IP])
+    admin = KafkaAdminClient(bootstrap_servers=[ip])
     try:
         demo_topic = NewTopic(name=name, num_partitions=part, replication_factor=1)
         admin.create_topics(new_topics=[demo_topic])
@@ -37,12 +37,12 @@ def create_topic(name,part=1):
 #         producer.send(topic_name, value=data)
 #         sleep(1)
 
-def produce(sensor,rate,instance=None):
+def produce(sensor,rate,ip=IP,instance=None):
     # df = pd.read_csv("../data/"+sensor+".csv")
 
     # create_topic(sensor)
     producer = KafkaProducer(
-        bootstrap_servers=[IP],
+        bootstrap_servers=[ip],
         value_serializer=lambda m: json.dumps(m).encode('ascii'))
     # for _,row in df.iterrows():
     while True:

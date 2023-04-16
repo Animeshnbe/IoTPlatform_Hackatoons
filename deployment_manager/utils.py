@@ -160,7 +160,7 @@ def deploy_util(app_name,username,port=None,app_type='app'):
     #     return {"status":0,"message":"Invalid user"}
     
     print("Deploying... ")
-    username = app_found["username"].lower()
+    app_owner = app_found["username"].lower()
     # same docker network as node manager
     resp = requests.post("http://localhost:8887",json={"port":port}).json()
     if resp["msg"]!="OK":
@@ -172,37 +172,42 @@ def deploy_util(app_name,username,port=None,app_type='app'):
     ftp_client=ssh.open_sftp()
     try:
         ftp_client.stat("uploads/"+app_name.lower())
-        print(True)
     except FileNotFoundError:
         ssh.exec_command("mkdir -p uploads/"+app_name.lower())
-    ftp_client.put("init.py","./uploads/"+app_name.lower()+"/init.py")
-    # Replace the foll. with sensor manager caller
-    ftp_client.put("dummy.json","./uploads/"+app_name.lower()+"/dummy.json")
-    ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
-    print("Placed starter files...")
-    if port is not None:
-        if "admin" not in found.role:
-            return {"status":0, "message":"Starting service not allowed"}
-        shutil.make_archive(app_name, 'zip', app_name)
-        ftp_client.put("../services/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
-        os.remove("../services/"+app_name+".zip")
-    else:
-        # 2 fetch code artifacts
-        download_zip(username,app_name+".zip")
-        print("Downloaded files...")
-        ftp_client.put("../uploads/"+username+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
-        print("Sent the app...")
+
+    _, stdout, _ = ssh.exec_command("ls uploads/"+app_name.lower())
+    if len(stdout.read().decode())==0:
+        ftp_client.put("init.py","./uploads/"+app_name.lower()+"/init.py")
+        # Replace the foll. with sensor manager caller
+        ftp_client.put("dummy.json","./uploads/"+app_name.lower()+"/dummy.json")
+        ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
+        print("Placed starter files...")
+        if app_type=='service':
+            if "admin" not in found.role:
+                return {"status":0, "message":"Starting service not allowed"}
+            shutil.make_archive(app_name, 'zip', app_name)
+            ftp_client.put("../services/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+            os.remove("../services/"+app_name+".zip")
+        else:
+            # 2 fetch code artifacts
+            if not os.path.exists("../uploads/"+app_owner+"/"+app_name+".zip"):
+                download_zip(app_owner,app_name+".zip")
+                print("Downloaded files...")
+            
+            ftp_client.put("../uploads/"+app_owner+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+            print("Sent the app...")
     ftp_client.close()
     ssh.exec_command("pip install requests")
 
-    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py "+app_name.lower()+" "+username+" "+configs["KAFKA_URI"])
-    print("SSH OUT>>>>>>>>>>>>>", stdout.read().decode())
+    port='' if port is None else str(port)
+    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+"--name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"]+" --port="+port)
+    out = stdout.read().decode()[:-1]
+    print("SSH OUT>>>>>>>>>>>>>", out)
     print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
-    result = json.loads(stdout.read().decode())
-    # shutil.copy
+    result = json.loads(out.split('\n')[-1])
     # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
-        if port is not None:
+        if app_type=='service':
             collection = "services"
         else:
             collection = "app_runtimes"
@@ -344,7 +349,7 @@ def restart_util(app_name,username,type="services"):
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=result['machine']["ip"],username=result['machine']["username"],password=result['machine']["password"])
-                _,res,_ = ssh.exec_command("docker run -d --net="+app_found["deployed_by"]+"_net -v "+result['volume']+":/home --name="+app_name+" "+app_name)
+                _,res,_ = ssh.exec_command("docker run -d -P --net="+app_found["deployed_by"]+"_net -v "+result['volume']+":/home --name="+app_name+" "+app_name)
                 output = res.read().decode()[:-1]
             else:
                 res = subprocess.run("docker run -d --name="+app_name+" "+app_name, stdout=subprocess.PIPE, shell=True)           
