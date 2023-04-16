@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+    title: "HACKATOONS Rest API"
+    description: "An API about sensors and their data"
+    version: "1.0.0"
+
+servers: 
+  - url: "/api"
+
+components:
+  schemas:
+    Sensor:
+      type: "object"
+      required: 
+        - sensorname
+      properties:
+        sensorname: 
+          type: "string"
+        sensortype: 
+          type: "string"
+        sensorlatitude: 
+          type: "string"
+        sensorlongitude: 
+          type: "string"
+        sensorip: 
+          type: "string"
+        sensorport: 
+          type: "string"
+        sensoractive: 
+          type: "string"
+  parameters: 
+    sensorname: 
+      name: "sensorname"
+      description: "Name of the sensor to get"
+      in: path
+      required: True
+      schema:
+        type: "string"
+    parameter_id: 
+      name: "parameter_id"
+      description: "ID of the sensor parameters"
+      in: path
+      required: True
+      schema: 
+        type: "string" 
+
+paths: 
+  /sensors: 
+    get: 
+      operationId: "sensors.read_all"
+      tags: 
+        - Sensors
+      summary: "Read the list of sensors"
+      responses: 
+        "200": 
+          description: "Successfully read sensors list"
+    post: 
+      operationId: "sensors.create"
+      tags: 
+        - Sensors
+      summary: "Create a sensor"
+      requestBody: 
+        description: "Sensor to create"
+        required: True
+        content: 
+          application/json: 
+            schema: 
+              x-body-name: "sensor"
+              $ref: "#/components/schemas/Sensor"
+      responses: 
+        "201": 
+          description: "Successfully created sensor"
+  /sensors/{sensorname}:
+    get: 
+      operationId: "sensors.read_one"
+      tags:
+        - Sensors
+      summary: "Read one sensor"
+      parameters: 
+        - $ref: "#/components/parameters/sensorname"
+      responses: 
+        "200":
+          description: "Successfully read sensor"
+    put:
+      tags:
+        - Sensors
+      operationId: "sensors.update"
+      summary: "Update a sensor"
+      parameters: 
+        - $ref: "#/components/parameters/sensorname"
+      responses: 
+        "200": 
+          description: Successfully updated sensor"
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              x-body-name: "sensor"
+              $ref: "#/components/schemas/Sensor"
+    delete: 
+      tags: 
+        - Sensors
+      operationId: "sensors.delete"
+      summary: "Delete a sensor"
+      parameters: 
+        - $ref: "#/components/parameters/sensorname"
+      responses: 
+        "204": 
+          description: "Successfully deleted sensor"
+  /parameters:
+    get: 
+      operationId: "parameters.read_all"
+      tags: 
+        - Parameters
+      summary: "Read the list of parameters"
+      responses: 
+        "200": 
+          description: "Successfully read parameters list"
+    post: 
+      operationId: "parameters.create"
+      tags: 
+        - Parameters
+      summary: "Create a parameter list associated with a sensor"
+      requestBody: 
+        description: "Parameter to create"
+        required: True
+        content: 
+          application/json: 
+            schema: 
+              x-body-name: "parameter"
+              type: "object"
+              properties: 
+                sensor_id: 
+                  type: "integer"
+                content:
+                  type: "string"
+      responses: 
+        "201": 
+          description: "Successfully created a parameter"
+  /parameters/{parameter_id}: 
+    get: 
+      operationId: "parameters.read_one"
+      tags: 
+        - Parameters
+      summary: "Read one parameter list"
+      parameters: 
+        - $ref: "#/components/parameters/parameter_id"
+      responses: 
+        "200": 
+          description: "Successfully read one parameter list"
+    put: 
+      tags: 
+        - Parameters
+      operationId: "parameters.update"
+      summary: "Update a parameter"
+      parameters: 
+        - $ref: "#/components/parameters/parameter_id"
+      responses: 
+        "200": 
+          "description": "Successfully updated parameter list"
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              x-body-name: "parameter"
+              type: "object"
+              properties: 
+                content: 
+                  type: "string"
+    delete: 
+      tags: 
+        - Parameters
+      operationId: "parameters.delete"
+      summary: "Delete a parameter"
+      parameters: 
+        - $ref: "#/components/parameters/parameter_id"
+      responses: 
+        "204": 
+          description: "Successfully deleted parameter"
