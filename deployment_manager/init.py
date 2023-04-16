@@ -254,8 +254,7 @@ def deploy_util(app_name,username):
     os.system("docker rm " + container_name) # in case already present
     
     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
-    fp = app_name+"_vol_"+str(uuid.uuid1())
-    os.mkdir(fp)
+    fp=""
     # execute the command and capture its output
     if args.app_type=='service':
         if args.port!='':
@@ -264,6 +263,8 @@ def deploy_util(app_name,username):
         else:
             result = subprocess.run("docker run -d --net="+username+"_net --name=" +container_name+' '+app_name, stdout=subprocess.PIPE, shell=True)
     else:
+        fp = app_name+"_vol_"+str(uuid.uuid1())
+        os.mkdir(fp)
         result = subprocess.run("docker run -d -p"+str(configs["port"])+":"+str(configs["port"])+" --net="+username+"_net -v "+fp+":/home --name=" +container_name+' '+app_name+':'+ver, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
@@ -273,7 +274,7 @@ def deploy_util(app_name,username):
     result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
     output = result.stdout.decode()[:-1]
     if len(output)>0:
-        return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
+        return {"status":1,"runtime_id":output,"vol":fp,"message":"Deployed successfully"}
     else:
         return {"status":0,"message":""}
 

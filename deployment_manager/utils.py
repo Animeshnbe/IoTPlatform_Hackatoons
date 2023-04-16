@@ -212,9 +212,9 @@ def deploy_util(app_name,username,port=None,app_type='app'):
         out = line
     # out = stdout.read().decode()[:-1]
     print("SSH OUT>>>>>>>>>>>>>", out.split('\n')[-1])
-    print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
+    # print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
 
-    result = json.loads(out.split('\n')[-1])
+    result = json.loads(out.split('\n')[-1].replace('\'','\"'))
     # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
         if app_type=='service':
