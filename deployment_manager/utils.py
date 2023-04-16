@@ -147,6 +147,10 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write(runcmd.rstrip())
     df.close()
 
+def errprinter(stderr):
+    for line in iter(stderr.readline, ""):
+        print(line, end="")
+
 def deploy_util(app_name,username,port=None,app_type='app'):
     # 1 verify user
     found = db['users'].find_one({'username':username})
@@ -200,10 +204,16 @@ def deploy_util(app_name,username,port=None,app_type='app'):
     ssh.exec_command("pip install requests")
 
     port='' if port is None else str(port)
-    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+"--name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"]+" --port="+port)
-    out = stdout.read().decode()[:-1]
-    print("SSH OUT>>>>>>>>>>>>>", out)
+    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+" --name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"]+" --port="+port)
+    out = ""
+    # threading.Thread(target=errprinter, args=(stderr,)).start()
+    for line in iter(stdout.readline, ""):
+        print(line, end="")
+        out = line
+    # out = stdout.read().decode()[:-1]
+    print("SSH OUT>>>>>>>>>>>>>", out.split('\n')[-1])
     print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
+
     result = json.loads(out.split('\n')[-1])
     # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
@@ -392,4 +402,15 @@ def get_services(req):
 
 if __name__=="__main__":
     print(deploy_util("sample_app","Admin"))
+    # ssh = paramiko.SSHClient()
+    # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # ssh.connect(hostname='172.26.113.180',username='anm8',password='marvel')
+    # ftp_client=ssh.open_sftp()
+    # ftp_client.put("m_init.py","./uploads/m_init.py")
+    # _, stdout, stderr = ssh.exec_command("cd uploads && python3 m_init.py")
+    # threading.Thread(target=errprinter, args=(stderr,)).start()
+    # for line in iter(stdout.readline, ""):
+    #     print(line, end="")
+    #     out = line
+
     # print("SSH OUT>>>>>>>>>>>>>", stdout.read().decode())

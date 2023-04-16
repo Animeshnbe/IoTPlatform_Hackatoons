@@ -203,6 +203,7 @@ def deploy_util(app_name,username):
         if "Error" in result and "already exists" not in result:
             return {"status":0,"message":"Failed to create network for deployment"}
         ver = "latest" if (configs["version"]=="") else str(configs["version"])
+        src = "/scripts"
     
     if not os.path.exists(file_path+src+"/Dockerfile"):
         generate_docker(file_path,configs,sensor_list,controller_list,username)
@@ -216,18 +217,20 @@ def deploy_util(app_name,username):
         print("Got current device ids: ",)
         
         # worklist = []
-        for item in sensors["sensor_instance_info"]:
-            for instance in device_instance["sensors"][item["sensor_instance_type"]]:
-                create_topic(instance,args.kafka_broker)
-                threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
+        # for item in sensors["sensor_instance_info"]:
+        #     for instance in device_instance["sensors"][item["sensor_instance_type"]]:
+        #         create_topic(instance,args.kafka_broker)
+        #         threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
                 # worklist.append({"type":"sensor","name":item,"device_id":instance})
         
         # build adapter
         check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest)
 
         # 4 build and deploy
-        # logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
-        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +src)
+        print('docker build -t '+app_name+':'+ver+' ' +file_path+src)
+        print(subprocess.run("ls "+file_path+src, stdout=subprocess.PIPE, shell=True).stdout.decode()[:-1])
+
+        out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path+src)
         if out!=0:
             return {"status":0,"message":"Failed build due to invalid configs"}
         else:
