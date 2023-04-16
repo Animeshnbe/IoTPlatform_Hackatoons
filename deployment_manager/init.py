@@ -69,7 +69,7 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write('ADD . ./home\n') # COPY SRC
     df.write('CMD cd home\n')
     df.write('RUN pip3 install --no-cache-dir -r ./home/requirements.txt\n')
-    df.write('EXPOSE '+str(service["port"])+'/tcp\n')
+    # df.write('EXPOSE '+str(service["port"])+'/tcp\n')
 
     # keyword_args = (' ').join(dependency)
     runcmd = 'ENTRYPOINT python3 -u /home/' + service['main_file'] + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) # + " " + keyword_args
@@ -247,7 +247,7 @@ def deploy_util(app_name,username):
     # if args.replica==True:
 
     if args.app_type=='service' and len(subprocess.run(f'docker  ps --filter "name=^{container_name}$"', stdout=subprocess.PIPE, shell=True).stdout.decode()[:-1].split("\n"))>1:
-        return {"status":1,"runtime_id":output,"message":"Already deployed"}
+        return {"status":1,"runtime_id":container_name,"message":"Already deployed"}
     os.system("docker rm " + container_name) # in case already present
     
     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
@@ -255,13 +255,13 @@ def deploy_util(app_name,username):
     os.mkdir(fp)
     # execute the command and capture its output
     if args.app_type=='service':
-        if args.port=='':
+        if args.port!='':
             internal_port = str(5000+int(app_name[3:]))
             result = subprocess.run("docker run -d -p"+args.port+":"+internal_port+" --name=" +container_name+' '+app_name, stdout=subprocess.PIPE, shell=True)
         else:
-            result = subprocess.run("docker run -d --name=" +container_name+' '+app_name, stdout=subprocess.PIPE, shell=True)
+            result = subprocess.run("docker run -d --net="+username+"_net --name=" +container_name+' '+app_name, stdout=subprocess.PIPE, shell=True)
     else:
-        result = subprocess.run("docker run -d -P --net="+username+"_net -v "+fp+":/home --name=" +container_name+' '+app_name+':'+ver, stdout=subprocess.PIPE, shell=True)
+        result = subprocess.run("docker run -d -p"+str(configs["port"])+":"+str(configs["port"])+" --net="+username+"_net -v "+fp+":/home --name=" +container_name+' '+app_name+':'+ver, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
     print("Docker run status %s",output)

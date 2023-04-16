@@ -217,8 +217,18 @@ def deploy_util(app_name,username,port=None,app_type='app'):
             # Create the collection
             collection = db.create_collection(collection)
         collection = db[collection]
-        mydata = {"node_id": result["runtime_id"], "app": app_name, "deployed_by":username, "status": True,
-                  "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
+        if app_type=='service':
+            if result['message']=="Already deployed":
+                running_service = collection.find_one({"app":app_name})
+                running_service["used_by"].append(username)
+                running_service.update({"used_by":running_service["used_by"]})
+            else:
+                mydata = {"node_id": result["runtime_id"], "app": app_name, "deployed_by":username, "status": True,
+                          "used_by":[username], "exposed_port":port,
+                        "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
+        else:
+            mydata = {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
+                    "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
         collection.insert_one(mydata)
 
     return result
@@ -301,7 +311,10 @@ def stop_util(app_name,username,type="app_runtimes"):
     found = db['users'].find_one({'username':username})
     if not found:
         return {"status":0,"message":"No such user"}
-    app_found = db[type].find_one({'app':app_name, "status": True})
+    if type=="app_runtimes":
+        app_found = db[type].find_one({'app':(username+"_"+app_name).lower(), "status": True})
+    else:
+        app_found = db[type].find_one({'app':app_name, "status": True})
     if not app_found:
         return {"status":0,"message":"No such deployed app found running"}
     elif 'admin' not in found["role"] and app_found["deployed_by"]!=username:
@@ -315,10 +328,12 @@ def stop_util(app_name,username,type="app_runtimes"):
             res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
             self_ip = res.stdout.decode()[-1]
             if result['machine']['ip'] != self_ip:
+                if type=="service" and 'admin' not in found["role"] and app_found["used_by"]!=[username]:
+                    return {"status":0,"message":"Cannot stop this service as it is in use"}
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=result['machine']["ip"],username=result['machine']["username"],password=result['machine']["password"])
-                _,res,_ = ssh.exec_command("docker container stop "+app_name)
+                _,res,_ = ssh.exec_command("docker container stop "+result["node_id"])
                 output = res.read().decode()
             else:
                 res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
@@ -326,37 +341,35 @@ def stop_util(app_name,username,type="app_runtimes"):
             print("Docker run status ",output)
             db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
             return output
-    return "No app found running"
+    return {"status":0,"message":"No app found running"}
     
 def restart_util(app_name,username,type="services"):
     found = db['users'].find_one({'username':username})
     if not found:
         return {"status":0,"message":"No such user"}
-    app_found = db[type].find_one({'app':app_name, "status": False})
+    if type=="app_runtimes":
+        app_found = db[type].find_one({'app':(username+"_"+app_name).lower(), "status": False})
+    else:
+        app_found = db[type].find_one({'app':app_name, "status": False})
     if not app_found:
         return {"status":0,"message":"No such deployed app found stopped"}
     elif 'admin' not in found["role"] and app_found["deployed_by"]!=username:
         return {"status":0,"message":"Invalid user"}
-    
-    query = {"app": app_name, "status": False}    
-    results = db[type].find(query)
-    for result in results:
-        app_name = result.get("app")    
-        if app_name:
-            res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
-            self_ip = res.stdout.decode()[-1]
-            if result['machine']['ip'] != self_ip:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(hostname=result['machine']["ip"],username=result['machine']["username"],password=result['machine']["password"])
-                _,res,_ = ssh.exec_command("docker run -d -P --net="+app_found["deployed_by"]+"_net -v "+result['volume']+":/home --name="+app_name+" "+app_name)
-                output = res.read().decode()[:-1]
-            else:
-                res = subprocess.run("docker run -d --name="+app_name+" "+app_name, stdout=subprocess.PIPE, shell=True)           
-                output = res.stdout.decode()
-            print("Docker run status ",output)
-            db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
-            return output
+       
+    res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
+    self_ip = res.stdout.decode()[-1]
+    if app_found['machine']['ip'] != self_ip:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname=app_found['machine']["ip"],username=app_found['machine']["username"],password=app_found['machine']["password"])
+        _,res,_ = ssh.exec_command("docker start "+app_found["node_id"])
+        output = res.read().decode()[:-1]
+    else:
+        res = subprocess.run("docker run -d --name="+app_name+" "+app_name, stdout=subprocess.PIPE, shell=True)           
+        output = res.stdout.decode()
+    print("Docker run status ",output)
+    db[type].update_one({"_id": app_found["_id"]}, {"$set": {"status": False}})
+    return output
     return "No app found running"
 
 def get_services(req):
