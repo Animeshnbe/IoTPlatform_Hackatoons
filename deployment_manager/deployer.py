@@ -27,20 +27,20 @@ def req_handler(app):
     def stop():
         req = flask.request.get_json()
         print("Json ",req)
-        stop_util(req['username'],req['service_name'], req['service_type'])
+        return flask.jsonify(stop_util(req['username'],req['service_name'], req['service_type']))
 
     @app.route('/restart_service', methods=['POST'])
     def restart():
         req = flask.request.get_json()
         print("Json ",req)
-        restart_util(req['username'],req['service_name'], req['service_type'])
+        return flask.jsonify(restart_util(req['username'],req['service_name'], req['service_type']))
 
     @app.route('/get_services', methods=['GET'])
     def get():
         req = flask.request.get_json()
         print("Json ",req)
         # username in req
-        get_services(req)
+        return flask.jsonify(get_services(req))
 
     @app.route('/test', methods=['POST'])
     def test():
@@ -52,9 +52,9 @@ def req_handler(app):
 
 if __name__ == '__main__':
     app = flask.Flask('deploymgr')
-    t = threading.Thread(target=heart_beat, args=("deployment_manager",))
-    t.daemon = True
-    t.start()
+    # t = threading.Thread(target=heart_beat, args=("deployment_manager",))
+    # t.daemon = True
+    # t.start()
     t2 = threading.Thread(target=req_handler, args=(app,))
     t2.daemon = True
     t2.start()

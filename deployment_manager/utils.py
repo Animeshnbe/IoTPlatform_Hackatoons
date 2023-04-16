@@ -69,7 +69,7 @@ def scheduler_consumer():
         # print(f"{topic_info}, {message_info}")
         print(message.value)
         m = message.value
-        deploy_util(m['user'],m['appname'])
+        # deploy_util(m['appname'],m['user'])
         # consumer.commit()
 
 def download_zip(container, zip_file_name,extract=False):
@@ -348,9 +348,9 @@ def stop_util(app_name,username,type="app_runtimes"):
             else:
                 res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
                 output = res.stdout.decode()
-            print("Docker run status ",output)
+            print("Docker stop status ",output)
             db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
-            return output
+            return {"status":1,"message":output}
     return {"status":0,"message":"No app found running"}
     
 def restart_util(app_name,username,type="services"):
@@ -375,12 +375,11 @@ def restart_util(app_name,username,type="services"):
         _,res,_ = ssh.exec_command("docker start "+app_found["node_id"])
         output = res.read().decode()[:-1]
     else:
-        res = subprocess.run("docker run -d --name="+app_name+" "+app_name, stdout=subprocess.PIPE, shell=True)           
+        res = subprocess.run("docker start "+app_found["node_id"], stdout=subprocess.PIPE, shell=True)           
         output = res.stdout.decode()
     print("Docker run status ",output)
     db[type].update_one({"_id": app_found["_id"]}, {"$set": {"status": False}})
-    return output
-    return "No app found running"
+    return {"status":1,"message":output}
 
 def get_services(req):
     user = db["users"].find_one({"username":req["username"]})
@@ -398,7 +397,7 @@ def get_services(req):
         if app_name:  
             app_names.append(app_name)
     print(app_names)
-
+    return app_names
 
 if __name__=="__main__":
     print(deploy_util("sample_app","Admin"))
