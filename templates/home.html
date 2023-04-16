@@ -1,0 +1,24 @@
+<!-- templates/home.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Flask REST API for HACKATOONS</title>
+    </head>
+    <body>
+        <h1>Welcome</h1>
+        <ul>
+            {% for sensor in sensors %}
+            <h2>{{ sensor.sensorname }} {{ sensor.sensortype }} {{ sensor.latitude }} {{ sensor.longitude }}</h2>
+            <ul>
+                {% for parameter in sensor.parameters %}
+                <li>
+                    {{ parameter.content }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
