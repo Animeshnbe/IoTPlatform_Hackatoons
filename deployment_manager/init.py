@@ -63,7 +63,8 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     with open(fp+'/scripts/requirements.txt', 'w') as f:
         for package in service['lib']:
             f.write(package+"\n")
-
+        if "requests" not in service['lib']:
+            f.write("requests\n") # for data adapter
 
     df.write('ADD . ./home\n') # COPY SRC
     df.write('CMD cd home\n')
