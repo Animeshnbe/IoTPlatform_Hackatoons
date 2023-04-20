@@ -28,6 +28,6 @@ def monitor():
     # print("kafka : ", kafka_ip_port)
     # print("consumer : ", consumer)
     for message in consumer:
-        # print(message.value)
+        print(message.value)
         yield message.value
     print("outside")

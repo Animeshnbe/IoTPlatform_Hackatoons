@@ -40,7 +40,7 @@ mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
 
 def fetch_status():
     for message in monitor():
-        logger.info("Message : " + str(message))
+        # logger.info("Message : " + str(message))
         module_dict[message['moduleName']] = message['currentTime']
 
 
@@ -63,6 +63,7 @@ def fetch_module_status():
     while True:
         if len(module_dict) > 0:
             for module in module_dict.keys():
+                # print("Module : ", module)
                 current_time = datetime.datetime.utcnow()
                 date_time_obj = datetime.datetime.strptime(module_dict[module], '%Y-%m-%d %H:%M:%S.%f')
                 logger.info("current_time : " + str(current_time))
@@ -81,7 +82,7 @@ def fetch_module_status():
                     if module in down:
                         down.remove(module)
 
-                    print(module + " up")
+                    # print(module + " up")
                     module_status[module] = 'up'
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
                 json_data = {'status': module_status[module]}
