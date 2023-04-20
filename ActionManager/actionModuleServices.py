@@ -22,6 +22,7 @@ def action_manager_request_service():
             action_manager_request_handler(input_json)
             # response = listening_to_sensor_manager()
             response = dict(message="success")
+            print("Response : ", response)
             return response
         except Exception as e:
             raise Exception(str(e))

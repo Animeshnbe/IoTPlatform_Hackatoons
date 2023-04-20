@@ -24,7 +24,7 @@ load_dotenv()
 result = []
 # mongo_port = int(parser.get("MONGO", "mongo_port"))
 # mongo_host = parser.get("MONGO", "mongo_host")
-mongo_port = os.getenv("mongo_port")
+mongo_port = int(os.getenv("mongo_port"))
 mongo_host = os.getenv("mongo_host")
 #
 # kafka_port = parser.get("KAFKA", "kafka_port")
@@ -60,15 +60,15 @@ def email_handler(to, subject, content):
 def helper_function(user_id, device_id, new_value):
     try:
         # mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-        message = dict(user_id=user_id, device_id=device_id, new_value = new_value)
+        message = dict(user_id=user_id, device_id=device_id, new_value=new_value)
         topic = os.getenv("action_device")
         # print("kafka_ip : ", kafka_ip)
         # print("kafka_port : ", kafka_port)
         # print("topic : ", topic)
         # print("message : ", message)
-        
+
         kafka_produce(kafka_ip, kafka_port, topic, message)
-        logger.info("Message : "+" send request action manager to sensor manager " + str(message))
+        logger.info("Message : " + " send request action manager to sensor manager " + str(message))
         current_timestamp = datetime.now()
         message["current_timestamp"] = current_timestamp
         mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
@@ -79,7 +79,6 @@ def helper_function(user_id, device_id, new_value):
 
 
 def send_data_to_sensor(host_topic, message):
-   
     for i in host_topic:
         temp = i.split(' ')
         ip = temp[0]
@@ -101,13 +100,13 @@ def listening_to_sensor_manager():
 
 def action_manager_request_handler(input_json):
     try:
-        print(input_json)
-        logger.info("Message : "+" got request from user to action manager " + str(input_json))
+        print("Input JSON : ", input_json)
+        logger.info("Message : " + " got request from user to action manager " + str(input_json))
         user_id = input_json.get("user_id", "")
         new_value = input_json.get("new_value", "None")
         device_id = input_json.get("device_id", "")
         th = threading.Thread(target=helper_function,
-                              args=(user_id, device_id,new_value))
+                              args=(user_id, device_id, new_value))
         th.start()
         # res = threading.Thread(target=listening_to_sensor_manager, args=(result,))
         # res.start()
