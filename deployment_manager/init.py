@@ -29,16 +29,16 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     dependency = service['dependencies']   #other service topics
 
     for ser in dependency['platform']:
-        requests.post("deployment_mgr:8888/deploy",json={"appname":ser,"user":username})
+        requests.post("deployment_mgr:8888/deploy",json={"appname":ser,"user":username,"app_type":"service"})
         # pass
 
     for ser in dependency['bundle']:
         if dependency['bundle'][ser]==True:
             if len(ser.split())>1:
                 x = ser[:ser.find(' ')]
-                subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+x)
+                subprocess.run("docker run -d --net="+username+"_net --name "+ser+"_"+username.lower()+" "+x)
             else:
-                subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
+                subprocess.run("docker run -d --net="+username+"_net --name "+ser+"_"+username.lower()+" "+ser)
         else:
             out=os.system('docker build -t '+ser+':latest '+ser+'/')
             # logger.info("Build result: ",out)
@@ -46,7 +46,7 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
                 print("Some error occured starting your service: "+ser)
                 os.remove('Dockerfile')
                 return
-            subprocess.run("docker run -d --net="+username+"_net --name "+ser+" "+ser)
+            subprocess.run("docker run -d --net="+username+"_net --name "+ser+"_"+username.lower()+" "+ser)
     baseimage = 'FROM '+service["base"]+':latest\n'
     df.write(baseimage)
     df.write('\n')
@@ -88,6 +88,7 @@ def fetch_n_map_sensors(sensors,controllers):
         ans["sensors"][sensor["sensor_instance_type"]] = []
         for device in devices:
             if device["sensortype"]==sensor["sensor_instance_type"]:
+                # if "location" in sensor and sensor["location"]==[device]:
                 ans["sensors"][sensor["sensor_instance_type"]].append(device["id"])
             
                 # print(sensor["sensor_instance_type"]," LEFT = ",sensor["sensor_instance_count"])
@@ -216,13 +217,14 @@ def deploy_util(app_name,username):
         #                    "controllers":{"temperature":[1],"brightness":[6]}}
         print("Got current device ids: ",)
         
-        # worklist = []
-        # for item in sensors["sensor_instance_info"]:
-        #     for instance in device_instance["sensors"][item["sensor_instance_type"]]:
-        #         create_topic(instance,args.kafka_broker)
-        #         threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
-                # worklist.append({"type":"sensor","name":item,"device_id":instance})
+        worklist = []
+        for item in sensors["sensor_instance_info"]:
+            for instance in device_instance["sensors"][item["sensor_instance_type"]]:
+                create_topic(instance,args.kafka_broker)
+                threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
+                worklist.append({"type":"sensor","name":item,"device_id":instance})
         
+        print("worklist>> ",worklist)
         # build adapter
         check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest)
 
