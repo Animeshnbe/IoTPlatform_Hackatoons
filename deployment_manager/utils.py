@@ -239,6 +239,7 @@ def deploy_util(app_name,username,port=None,app_type='app'):
 
     return result
 
+# def deploy_app_location()
 # def deploy_util2(app_name,username,port=None):
 #     # 1 verify user
 #     found = db['users'].find_one({'username':username})
@@ -424,20 +425,16 @@ def restart_util(app_name,username,type="services",run_type="admin_restart"):
 def get_services(req):
     user = db["users"].find_one({"username":req["username"]})
     if user["role"]=="admin":
-        results = db["services"].find()
+        results = list(db["services"].find())
     elif user["role"]=="app_admin":
         query = {"deployed_by" : req["username"]}
-        results = db["app_runtimes"].find(query)
+        results = list(db["app_runtimes"].find(query))
     else:
         query = {"type" : "open"}
-        results = db["services"].find(query)
-    app_names = []
-    for result in results:        
-        app_name = result.get("app")
-        if app_name:  
-            app_names.append(app_name)
-    print(app_names)
-    return app_names
+        results = list(db["services"].find(query))
+        query = {"status" : True}
+        results.extend(list(db["app_runtimes"].find(query)))
+    return results
 
 if __name__=="__main__":
     print(deploy_util("sample_app","Admin"))

@@ -8,7 +8,11 @@ def req_handler(app):
     def deploy():
         # print(flask.request.get_json())
         req = flask.request.get_json()
-        output = deploy_util(req['user'],req['appname'])
+        if 'port' in req:
+            port=req['port']
+        else:
+            port=None
+        output = deploy_util(req['user'],req['appname'],port=port,app_type=req['app_type'])
         return flask.jsonify(output)
 
     @app.route('/start_service', methods=['POST'])
@@ -52,10 +56,11 @@ def req_handler(app):
 
 if __name__ == '__main__':
     app = flask.Flask('deploymgr')
-    # t = threading.Thread(target=heart_beat, args=("deployment_manager",))
+    # t = threading.Thread(target=heart_beat, args=("deployer",))
     # t.daemon = True
     # t.start()
-    t2 = threading.Thread(target=req_handler, args=(app,))
+
+    t2 = threading.Thread(target=scheduler_consumer, args=())
     t2.daemon = True
     t2.start()
-    scheduler_consumer()
+    req_handler(app)
