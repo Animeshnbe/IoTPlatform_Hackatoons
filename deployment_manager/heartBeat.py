@@ -1,12 +1,13 @@
 from kafka import KafkaProducer
 import json
 import datetime
-import threading
+import os
 from time import sleep
 
 import configparser
 config = configparser.ConfigParser()
-config.read('.env')
+config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+config.read(config_file_path)
 configs = config['local']
 
 

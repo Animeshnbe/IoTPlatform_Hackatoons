@@ -5,5 +5,7 @@ uploads/
 *_vol/
 *.zip
 *.log
+*.ini
+*.pyc
 __pycache__/
 deployer/

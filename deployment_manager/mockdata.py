@@ -38,20 +38,21 @@ def create_topic(name,ip=IP,part=1):
 #         sleep(1)
 
 def produce(sensor,rate,ip=IP,instance=None):
-    df = pd.read_csv("../data/"+sensor+".csv")
+    # df = pd.read_csv("../data/"+sensor+".csv")
 
     # create_topic(sensor)
     producer = KafkaProducer(
         bootstrap_servers=[ip],
         value_serializer=lambda m: json.dumps(m).encode('ascii'))
-    for _,row in df.iterrows():
+    for i in range(100):
     # while True:
-        if instance is None:
-            # call_sensor_instance
-            producer.send(str(sensor), key=None,value={"content":random.randint(1,100)})
-        else:
-            producer.send(sensor, key=instance,value=row.to_dict())
-            pass
+        producer.send(str(sensor), key=None,value={"content":random.randint(1,100)})
+        # if instance is None:
+        #     # call_sensor_instance
+        #     producer.send(str(sensor), key=None,value={"content":random.randint(1,100)})
+        # else:
+        #     producer.send(sensor, key=instance,value=row.to_dict())
+        #     pass
         sleep(rate)
 
 if __name__=='__main__':

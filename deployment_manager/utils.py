@@ -1,4 +1,3 @@
-import flask
 import threading
 import requests
 import json
@@ -6,7 +5,8 @@ import os
 import io
 import pymongo
 import paramiko
-import uuid
+from datetime import datetime as dt
+# import uuid
 import shutil
 import subprocess
 from azure.storage.blob import BlobServiceClient
@@ -15,18 +15,16 @@ from loggingUtility import logger_func
 
 logger = logger_func()
 
-# logger.info("The program is working as expected")
-# logger.warning("The program may not function properly")
-# logger.error("The program encountered an error")
-# logger.critical("The program crashed")
-
 import configparser
 config = configparser.ConfigParser()
-config.read('.env')
+
+config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+config.read(config_file_path)
+
 configs = config['local']
 
-from mockdata import produce
-from kafka import KafkaConsumer
+# from mockdata import produce
+from kafkautil import Consume
 
 import pymongo
 client = pymongo.MongoClient(configs["MONGO_CONN_STRING"])
@@ -43,38 +41,34 @@ def get_schedules(consumer):
         deploy_requests.append(message.value)
 
 def scheduler_consumer():
-    # while(1):
-    #     if len(deploy_requests)>0:
-    #         deploy_request = deploy_requests.pop(0)
-    #         print(deploy_request)
-    #         deploy_util(deploy_request['user'],deploy_request['appname'])
-    #     sleep(0.5)
+    consumer = Consume('sch_dep')
+    while True:
+        task = consumer.pull()
+        print("Got ",task)
+        if task['type']=='start':
+            deploy_util(task['appname'],task['user'])
+        else:
+            stop_util(task['appname'],task['user'])
+    # consumer = KafkaConsumer(bootstrap_servers=[configs["KAFKA_URI"]],
+    #                          enable_auto_commit=True, auto_offset_reset="earliest",
+    #                          consumer_timeout_ms=1000, group_id="Test")
 
-    # consumer = KafkaConsumer('sch_dep', bootstrap_servers=[configs['KAFKA_URI']],
-    #                             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
+    # consumer.subscribe('deploi')
+    # print("Waiting...")
+    # for message in consumer:
+    #     topic_info = f"topic: {message.topic} ({message.partition}|{message.offset})"
+    #     data = json.loads(message.value.decode('utf-8'))
+    #     message_info = f"key: {message.key}, {data}"
+    #     print(f"{topic_info}, {message_info}")
 
-
-    # t1 = threading.Thread(target = get_schedules, args=(consumer,))
-    # t1.start()
-    print(configs["KAFKA_URI"])
-    consumer = KafkaConsumer('sch_dep', bootstrap_servers=[configs["KAFKA_URI"]],
-                                value_deserializer=lambda x: json.loads(x.decode('utf-8')))
-
-    # consumer.seek(0,0)
-    print("Waiting...")
-    for message in consumer:
-        # topic_info = f"topic: {message.topic} ({message.partition}|{message.offset})"
-        # data = json.loads(message.value.decode('utf-8'))
-        # message_info = f"key: {message.key}, {data}"
-        # print(f"{topic_info}, {message_info}")
-        print(message.value)
-        m = message.value
-        # deploy_util(m['appname'],m['user'])
-        # consumer.commit()
+    #     print("Now", message.value)
+    #     m = message.value
+    #     # deploy_util(m['appname'],m['user'])
+    #     consumer.commit()
 
 def download_zip(container, zip_file_name,extract=False):
     logger.info("ARGS +++++ %s %s",container,zip_file_name)
-    connect_str = "DefaultEndpointsProtocol=https;AccountName=aman0ias;AccountKey=ejuMHDXoYsp4ktNpndJTqrC0QXgEi7DCv0cJiK94R6ZhMYZa+VmKnYcTNv3T6qIc/qoYnnZbGZPg+AStGotFJA==;EndpointSuffix=core.windows.net"
+    connect_str = "DefaultEndpointsProtocol=https;AccountName=iiithias;AccountKey=ogR3nO9ziIO3Ktohi9PuhEh7hWfyFF3WahB9dh5WtYa6InB5DSRh2bLltuVJD9c5BedHAgPgFwFP+AStoUbnEg==;EndpointSuffix=core.windows.net"
 
     container_name = container         #container name
     blob_name = zip_file_name          #zip file name
@@ -235,87 +229,89 @@ def deploy_util(app_name,username,port=None,app_type='app'):
             else:
                 mydata = {"node_id": result["runtime_id"], "app": app_name, "deployed_by":username, "status": True,
                           "used_by":[username], "exposed_port":port,
-                        "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
+                        "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
+                        "created":dt.now(),"updated":dt.now()}
         else:
             mydata = {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
-                    "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]}}
+                    "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
+                    "created":dt.now(),"updated":dt.now()}
         collection.insert_one(mydata)
 
     return result
 
-def deploy_util2(app_name,username,port=None):
-    # 1 verify user
-    found = db['users'].find_one({'username':username})
-    if not found:
-        return {"status":0,"message":"Not allowed"}
+# def deploy_util2(app_name,username,port=None):
+#     # 1 verify user
+#     found = db['users'].find_one({'username':username})
+#     if not found:
+#         return {"status":0,"message":"Not allowed"}
     
-    resp = requests.post("http://nodemgr:8887",json={"port":port}).json()
-    if resp["msg"]!="OK":
-        return {"status":0,"message":resp["msg"]}
+#     resp = requests.post("http://nodemgr:8887",json={"port":port}).json()
+#     if resp["msg"]!="OK":
+#         return {"status":0,"message":resp["msg"]}
     
-    # ssh = paramiko.SSHClient()
-    # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
-    # 2 fetch code artifacts
+#     # ssh = paramiko.SSHClient()
+#     # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#     # ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+#     # 2 fetch code artifacts
     
-    download_zip(username.lower(),app_name+".zip", True)
-    file_path = '../uploads/'+username.lower()+'/'+app_name
-    with open(file_path+'/appmeta.json') as f:
-        configs = json.load(f)
+#     download_zip(username.lower(),app_name+".zip", True)
+#     file_path = '../uploads/'+username.lower()+'/'+app_name
+#     with open(file_path+'/appmeta.json') as f:
+#         configs = json.load(f)
 
-    with open(file_path+'/controller.json') as f:
-        controllers = json.load(f)
+#     with open(file_path+'/controller.json') as f:
+#         controllers = json.load(f)
 
-    with open(file_path+'/sensor.json') as f:
-        sensors = json.load(f)
+#     with open(file_path+'/sensor.json') as f:
+#         sensors = json.load(f)
     
-    sensor_list = [s["sensor_instance_type"] for s in sensors["sensor_instance_info"]]
-    controller_list = [s["controller_instance_type"] for s in controllers["controller_instance_info"]]
-    generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"], "env":configs["env"]},sensor_list,controller_list,username)
-    # 3 sensor binding
-    # TBD by sensor manager after integration
-    for item in sensors["sensor_instance_info"]:
-        threading.Thread(target=produce, args=(item["sensor_instance_type"],item["rate"],)).start()
+#     sensor_list = [s["sensor_instance_type"] for s in sensors["sensor_instance_info"]]
+#     controller_list = [s["controller_instance_type"] for s in controllers["controller_instance_info"]]
+#     generate_docker(file_path,{"base":configs["base"],"requirements":configs["lib"],"dependency":configs["dependencies"],"filename":configs["main_file"], "env":configs["env"]},sensor_list,controller_list,username)
+#     # 3 sensor binding
+#     # TBD by sensor manager after integration
+#     for item in sensors["sensor_instance_info"]:
+#         threading.Thread(target=produce, args=(item["sensor_instance_type"],item["rate"],)).start()
 
-    # 4 build and deploy
-    fp = app_name+"_vol_"+str(uuid.uuid1())
-    os.mkdir(fp)
-    #'" + fp +"'
-    ver = "latest" if (configs["version"]=="") else str(configs["version"])
-    logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
-    out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/')
-    # print("Build result: ",out)
-    if out!=0:
-        return {"status":0,"message":"Failed build due to invalid configs"}
-    if 'admin' in found["role"] or True: 
-        container_name = app_name
-    else:
-        return {"status":0,"message":"Invalid user"}
+#     # 4 build and deploy
+#     fp = app_name+"_vol_"+str(uuid.uuid1())
+#     os.mkdir(fp)
+#     #'" + fp +"'
+#     ver = "latest" if (configs["version"]=="") else str(configs["version"])
+#     logger.info('docker build -t '+app_name+':'+ver+' ' +file_path+'/')
+#     out=os.system('docker build -t '+app_name+':'+ver+' ' + file_path +'/')
+#     # print("Build result: ",out)
+#     if out!=0:
+#         return {"status":0,"message":"Failed build due to invalid configs"}
+#     if 'admin' in found["role"] or True: 
+#         container_name = app_name
+#     else:
+#         return {"status":0,"message":"Invalid user"}
     
-    os.system("docker rm " + container_name)
+#     os.system("docker rm " + container_name)
     
-    # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
+#     # out = os.system("docker run -d -v "+fp+":/home --name=" +container_name +' '+app_name)   
 
-    # execute the command and capture its output
-    result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
-    result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
-    # decode the output and print it
-    output = result.stdout.decode()
-    logger.info("Docker run status %s",output)
+#     # execute the command and capture its output
+#     result = subprocess.run("docker network create "+username+"_net", stdout=subprocess.PIPE, shell=True)
+#     result = subprocess.run("docker run -d --net="+username+"_net -v "+fp+":/home --name=" +container_name +' '+app_name, stdout=subprocess.PIPE, shell=True)
+#     # decode the output and print it
+#     output = result.stdout.decode()
+#     logger.info("Docker run status %s",output)
 
-    # _,stdout,stderr=os.system("docker ps -aqf 'name="+ container_name+"'")
-    result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
-    output = result.stdout.decode()[:-1]
-    if "app_runtimes" in db.list_collection_names():
-        print("The collection already exists.")
-    else:
-        # Create the collection
-        collection = db.create_collection("app_runtimes")
-    collection = db["app_runtimes"]
-    mydata = {"node_id": output, "app": app_name, "deployed_by":username, "volume":fp}
+#     # _,stdout,stderr=os.system("docker ps -aqf 'name="+ container_name+"'")
+#     result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
+#     output = result.stdout.decode()[:-1]
+#     if "app_runtimes" in db.list_collection_names():
+#         print("The collection already exists.")
+#     else:
+#         # Create the collection
+#         collection = db.create_collection("app_runtimes")
+#     collection = db["app_runtimes"]
+#     mydata = {"node_id": output, "app": app_name, "deployed_by":username, "volume":fp}
 
-    collection.insert_one(mydata)
-    return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
+#     collection.insert_one(mydata)
+#     return {"status":1,"runtime_id":output,"message":"Deployed successfully"}
 
 def stop_util(app_name,username,type="app_runtimes"):
     found = db['users'].find_one({'username':username})
@@ -349,11 +345,11 @@ def stop_util(app_name,username,type="app_runtimes"):
                 res = subprocess.run("docker container stop "+app_name, stdout=subprocess.PIPE, shell=True)           
                 output = res.stdout.decode()
             print("Docker stop status ",output)
-            db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False}})
+            db[type].update_one({"_id": result["_id"]}, {"$set": {"status": False,"updated":dt.now()}})
             return {"status":1,"message":output}
     return {"status":0,"message":"No app found running"}
     
-def restart_util(app_name,username,type="services"):
+def restart_util(app_name,username,type="services",run_type="admin_restart"):
     found = db['users'].find_one({'username':username})
     if not found:
         return {"status":0,"message":"No such user"}
@@ -368,18 +364,62 @@ def restart_util(app_name,username,type="services"):
        
     res = subprocess.run("hostname -i", stdout=subprocess.PIPE, shell=True)           
     self_ip = res.stdout.decode()[-1]
-    if app_found['machine']['ip'] != self_ip:
+    if run_type=="fault":
+        resp = requests.post("http://localhost:8887",json={"port":None}).json()
+        if resp["msg"]!="OK":
+            return {"status":0,"message":"Could not redeploy: "+resp["msg"]}
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname=app_found['machine']["ip"],username=app_found['machine']["username"],password=app_found['machine']["password"])
-        _,res,_ = ssh.exec_command("docker start "+app_found["node_id"])
-        output = res.read().decode()[:-1]
+        ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+        app_upload = db['app_uploads'].find_one({'filename':app_name})
+        app_owner = app_upload["username"].lower()
+        ftp_client=ssh.open_sftp()
+        try:
+            ftp_client.stat("uploads/"+app_name.lower())
+        except FileNotFoundError:
+            ssh.exec_command("mkdir -p uploads/"+app_name.lower())
+        ftp_client.put("init.py","./uploads/"+app_name.lower()+"/init.py")
+        ftp_client.put("dummy.json","./uploads/"+app_name.lower()+"/dummy.json")
+        ftp_client.put("mockdata.py","./uploads/"+app_name.lower()+"/mockdata.py")
+        ftp_client.put("../uploads/"+app_owner+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
+        ftp_client.close()
+        ssh.exec_command("pip install requests")
+        _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"])
+        out = ""
+        # threading.Thread(target=errprinter, args=(stderr,)).start()
+        for line in iter(stdout.readline, ""):
+            print(line, end="")
+            out = line
+        # out = stdout.read().decode()[:-1]
+        print("SSH OUT>>>>>>>>>>>>>", out.split('\n')[-1])
+        result = json.loads(out.split('\n')[-1].replace('\'','\"'))
+        # result = {'status':1,'message':"Redeployed Successfully"}
+        if result['status']==1:
+            db[type].update_one({"_id": app_found["_id"]}, {"$set": {"node_id": result["runtime_id"],"volume": result["vol"],
+                                                                     "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
+                                                                     "deployed_by":"monitor","status": True,"updated":dt.now()}})
+            output = res.read().decode()[:-1]
+            status=1
+        else:
+            output = "Could not deploy in different host"
+            status=0
     else:
-        res = subprocess.run("docker start "+app_found["node_id"], stdout=subprocess.PIPE, shell=True)           
-        output = res.stdout.decode()
+        if app_found['machine']['ip'] != self_ip:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=app_found['machine']["ip"],username=app_found['machine']["username"],password=app_found['machine']["password"])
+            _,res,_ = ssh.exec_command("docker start "+app_found["node_id"])
+            output = res.read().decode()[:-1]
+        else:
+            res = subprocess.run("docker start "+app_found["node_id"], stdout=subprocess.PIPE, shell=True)           
+            output = res.stdout.decode()
+        if "Error" not in output:
+            db[type].update_one({"_id": app_found["_id"]}, {"$set": {"deployed_by":"monitor","status": True,"updated":dt.now()}})
+            status=1
+        else:
+            status=0
     print("Docker run status ",output)
-    db[type].update_one({"_id": app_found["_id"]}, {"$set": {"status": False}})
-    return {"status":1,"message":output}
+    return {"status":status,"message":output}
 
 def get_services(req):
     user = db["users"].find_one({"username":req["username"]})
