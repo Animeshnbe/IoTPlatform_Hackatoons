@@ -60,7 +60,7 @@ def email_handler(to, subject, content):
 def message_handler(to, content):
     response = {}
     try:
-        result = send_sms(to, content)
+        result = send_sms(int(to), content)
         if result == "Success":
             response["status"] = "OK"
             response["message"] = "Message sent successfully"

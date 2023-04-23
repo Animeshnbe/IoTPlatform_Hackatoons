@@ -65,12 +65,16 @@ def send_email(subject, text, receiver_email):
 # from_number = 15076323386
 # to_number = 919898604066
 def send_sms(to_number, message):
-    account_sid = os.getenv("account_sid")
-    auth_token = os.getenv("auth_token")
-    from_number = os.getenv("from_number")
-    client = Client(account_sid, auth_token)
-    message = client.messages.create(body=message, from_=from_number, to=to_number)
-    print(message.sid)
-
+    try:
+        account_sid = os.getenv("account_sid")
+        auth_token = os.getenv("auth_token")
+        from_number = os.getenv("from_number")
+        client = Client(account_sid, auth_token)
+        message = client.messages.create(body=message, from_=from_number, to=to_number)
+        print(message.sid)
+        return "Success"
+    except Exception as exception:
+        print("Error: %s!\n\n" % exception)
+        return "Error"
 # send_sms(919898604066,"Hi Nikhil Khemchandani,From Hackatoons")
 # send_email("Hackatoons","Hi Nikhil Khemchandani,From Hackatoons","nikhilkhemchandani5@gmail.com")
