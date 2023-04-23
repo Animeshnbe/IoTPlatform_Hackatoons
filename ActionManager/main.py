@@ -3,7 +3,7 @@ from flask_cors import CORS
 import threading
 import actionModuleServices
 from heartBeat import heart_beat
-from prometheus_flask_exporter import PrometheusMetrics
+# from prometheus_flask_exporter import PrometheusMetrics
 
 
 # from actionModuleServices import fetch_nodes_status
@@ -21,7 +21,7 @@ def route():
 
 if __name__ == '__main__':
     # metrics = PrometheusMetrics(app)
-    module_name = "ActionManager"
+    module_name = "action_manager"
     t = threading.Thread(target=heart_beat, args=(module_name,))
     t.daemon = True
     t.start()
