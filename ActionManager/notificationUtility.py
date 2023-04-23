@@ -5,6 +5,7 @@ import json
 from twilio.rest import Client
 from dotenv import load_dotenv
 import os
+
 # account_sid = 'AC1380002ba0e2b44a4e373592ae725925'
 # auth_token = 'da0da81c06f4c2b6775f0744016b95a4'
 
@@ -13,6 +14,7 @@ import os
 # CONFIGURATION_FILE = "settings.conf"
 # parser.read([CONFIGURATION_FILE])
 load_dotenv()
+
 
 def send_email(subject, text, receiver_email):
     '''
@@ -24,7 +26,7 @@ def send_email(subject, text, receiver_email):
     :param receiver_email: string
     :return: response
     '''
-    gmail_user= os.getenv("email_sender")
+    gmail_user = os.getenv("email_sender")
     # gmail_user = parser.get("EMAIL", "email_sender")
     # gmail_app_password = parser.get("EMAIL", "email_password")
     gmail_app_password = os.getenv("email_password")
@@ -62,12 +64,12 @@ def send_email(subject, text, receiver_email):
 
 # from_number = 15076323386
 # to_number = 919898604066
-def send_sms(to_number,message):
+def send_sms(to_number, message):
     account_sid = os.getenv("account_sid")
     auth_token = os.getenv("auth_token")
     from_number = os.getenv("from_number")
     client = Client(account_sid, auth_token)
-    message = client.messages.create(body=message, from_ =  from_number, to = to_number)
+    message = client.messages.create(body=message, from_=from_number, to=to_number)
     print(message.sid)
 
 # send_sms(919898604066,"Hi Nikhil Khemchandani,From Hackatoons")

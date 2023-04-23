@@ -6,7 +6,7 @@ from mongo_utility import MongoUtility
 from bson import json_util
 from datetime import datetime
 from kafka import KafkaProducer
-from notificationUtility import send_email
+from notificationUtility import send_email, send_sms
 import configparser
 from kafkautilities import kafka_consume, kafka_produce
 from mongo_utility import MongoUtility
@@ -42,6 +42,25 @@ def email_handler(to, subject, content):
     response = {}
     try:
         result = send_email(subject, content, to)
+        if result == "Success":
+            response["status"] = "OK"
+            response["message"] = "Message sent successfully"
+            return response
+        else:
+            response["status"] = "Fail"
+            response["message"] = "Message not sent successfully"
+            return response
+    except Exception as e:
+        print(e)
+        response["status"] = "Fail"
+        response["message"] = "Message not sent successfully"
+        return response
+
+
+def message_handler(to, content):
+    response = {}
+    try:
+        result = send_sms(to, content)
         if result == "Success":
             response["status"] = "OK"
             response["message"] = "Message sent successfully"
