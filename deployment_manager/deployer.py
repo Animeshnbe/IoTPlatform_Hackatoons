@@ -2,8 +2,13 @@ import flask
 import threading
 from utils import scheduler_consumer, deploy_util, stop_util, restart_util, get_services
 from heartBeat import heart_beat
+from functools import wraps
+import jwt
 
-def req_handler(app):
+app = flask.Flask('deploymgr')
+app.config['SECRET_KEY'] = 'mysecretkey'
+
+def req_handler():
     @app.route('/deploy', methods=['POST'])
     def deploy():
         # print(flask.request.get_json())
@@ -31,7 +36,7 @@ def req_handler(app):
     def stop():
         req = flask.request.get_json()
         print("Json ",req)
-        return flask.jsonify(stop_util(req['username'],req['service_name'], req['service_type']))
+        return flask.jsonify(stop_util(req['name'], req['username'],req['type']))
 
     @app.route('/restart_service', methods=['POST'])
     def restart():
@@ -52,10 +57,24 @@ def req_handler(app):
         return flask.jsonify({"status":"ok","runtime_id":0})
     app.run(host = '0.0.0.0',port = 8888, threaded=True)
 	
-
+def authorized(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = flask.request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token:
+            return flask.jsonify({'error': 'Missing token'}), 401
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        except (jwt.InvalidTokenError, jwt.DecodeError):
+            return flask.jsonify({'error': 'Invalid token'}), 401
+        name = payload['name']
+        if name not in ['ui','app_manager','monitoring']:
+            return flask.jsonify({'error': 'Unauthorized'}), 401
+        flask.request.user = name
+        return f(*args, **kwargs)
+    return decorated
 
 if __name__ == '__main__':
-    app = flask.Flask('deploymgr')
     # t = threading.Thread(target=heart_beat, args=("deployer",))
     # t.daemon = True
     # t.start()
@@ -63,4 +82,4 @@ if __name__ == '__main__':
     t2 = threading.Thread(target=scheduler_consumer, args=())
     t2.daemon = True
     t2.start()
-    req_handler(app)
+    req_handler()

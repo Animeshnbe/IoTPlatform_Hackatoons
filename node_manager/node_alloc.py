@@ -2,19 +2,21 @@ import threading
 import json
 import paramiko
 import flask
+from prometheus_flask_exporter import PrometheusMetrics
 
 LOCK_ALLOC = threading.Lock()
 
 def allocate_new_machine(port=None):
 	global LOCK_ALLOC
 	LOCK_ALLOC.acquire()
-	result,ip,username,password="","","",""
+	ip,username,password="","",""
 	with open("vm_list.json") as file:
 		free_list=json.load(file)
 	if( len(free_list)==0):
-		result = "NO MACHINE"
+		resp = {"msg":"NO MACHINE"}
 	else:
 		print("setting up new_machine")
+		resp = {"msg":"SERVERS NOT REACHABLE"}
 		for vm in free_list:
 			ip = vm["ip"]
 			username = vm["username"]
@@ -54,21 +56,23 @@ def allocate_new_machine(port=None):
 					print(output)
 				# ssh_client
 				ssh_client.close()
+				resp = {"msg":"OK","ip":ip,"username":username,"password":password}
+				free_list.remove(vm)
 				free_list.append(vm)
-				del vm
-				with open("freelist.json","w") as file:
-					file.write(json.dumps(free_list))
-				LOCK_ALLOC.release()
-				return {"msg":"OK","ip":ip,"username":username,"password":password}
+				# print(free_list)
+				with open("vm_list.json","w") as file:
+					file.write(json.dumps(free_list))		
+				break
 			except Exception as ex:
 				print("Could not reach VM ",ex)
-		result = "SERVERS NOT REACHABLE"
+			
 	LOCK_ALLOC.release()
-	return {"msg":result}
+	return resp
 
 # print(allocate_new_machine())
 if __name__ == '__main__':
 	app = flask.Flask('nodemgr')
+	metrics = PrometheusMetrics(app)
 	@app.route('/', methods=['POST', 'GET'])
 	def alloc():
 		try:
@@ -80,4 +84,10 @@ if __name__ == '__main__':
 		except Exception as ex:
 			return flask.jsonify({"msg":"API error "+ex})
 		
+	metrics.register_default(
+		metrics.counter(
+			'by_path_counter', 'Request count by request paths',
+			labels={'path': lambda: flask.request.path}
+		)
+	)
 	app.run(host = '0.0.0.0',port = 8887, threaded=True)

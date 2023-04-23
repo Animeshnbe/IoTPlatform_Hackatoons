@@ -9,3 +9,5 @@ uploads/
 *.pyc
 __pycache__/
 deployer/
+node_manager/*.json
+Authentication/

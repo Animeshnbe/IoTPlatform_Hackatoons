@@ -97,6 +97,9 @@ def fetch_n_map_sensors(sensors,controllers):
                     if sensor["sensor_instance_count"]==0:
                         break
 
+    for sensor in sensors:
+        while len(ans["sensors"][sensor["sensor_instance_type"]])<sensor["sensor_instance_count"]:
+            ans["sensors"][sensor["sensor_instance_type"]].append(-1)
 
     for sensor in controllers:
         ans["controllers"][sensor["controller_instance_type"]] = []
@@ -147,7 +150,10 @@ def attach_sensors(names):
     for name in names:
         topics_raw.extend(devices["sensors"][name])
 
-    topics = [str(t) for t in topics_raw]
+    topics = []
+    for t in topics_raw:
+        if t!=-1:
+            topics.append(str(t))
     res = requests.post(
         url="http://{base_uri}/consumers/{consumer_group}/instances/{name}/subscription",
         data=json.dumps({{"topics": topics}}),
@@ -166,9 +172,9 @@ def attach_sensors(names):
 def send_controller(controller_name,action,instance=None):
     if instance==None:
         for dev in devices["controllers"][controller_name]:
-            requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":{consumer_group.split('_')[0]},"new_value":action,"device_id":dev}})
+            requests.post("http://10.2.129.21:9825/actionManagerAPI", json={{"user_id":"{consumer_group.split('_')[0]}","new_value":action,"device_id":dev}})
     else:
-        requests.post("http://action_manager:9825/actionManagerAPI", json={{"user_id":{consumer_group.split('_')[0]},"new_value":action,"device_id":devices["controller"][controller_name][instance]}})
+        requests.post("http://10.2.129.21:9825/actionManagerAPI", json={{"user_id":"{consumer_group.split('_')[0]}","new_value":action,"device_id":devices["controllers"][controller_name][instance]}})
 
         ''')
     
@@ -267,6 +273,7 @@ def deploy_util(app_name,username):
     else:
         fp = app_name+"_vol_"+str(uuid.uuid1())
         os.mkdir(fp)
+        print("Starting run shell: docker run -d -p"+str(configs["port"])+":"+str(configs["port"])+" --net="+username+"_net -v "+fp+":/home --name=" +container_name+' '+app_name+':'+ver)
         result = subprocess.run("docker run -d -p"+str(configs["port"])+":"+str(configs["port"])+" --net="+username+"_net -v "+fp+":/home --name=" +container_name+' '+app_name+':'+ver, stdout=subprocess.PIPE, shell=True)
     # decode the output and print it
     output = result.stdout.decode()
@@ -278,7 +285,7 @@ def deploy_util(app_name,username):
     if len(output)>0:
         return {"status":1,"runtime_id":output,"vol":fp,"message":"Deployed successfully"}
     else:
-        return {"status":0,"message":""}
+        return {"status":0,"message":"Could not move the files to deploy"}
 
 print(deploy_util(args.name,args.user),end="")
 

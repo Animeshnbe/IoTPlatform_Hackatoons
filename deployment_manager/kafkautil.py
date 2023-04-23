@@ -36,6 +36,7 @@ class Consume:
                 flag = 1
             else:
                 flag = 0
+                self.my_consumer.commit()
         for key in x:
             data = x[key][0].value
             return data
