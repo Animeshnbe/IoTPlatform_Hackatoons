@@ -2,7 +2,6 @@ import requests
 import json
 import time
 import threading
-from mongo_utility import MongoUtility
 from bson import json_util
 from datetime import datetime
 from kafka import KafkaProducer
@@ -26,6 +25,9 @@ result = []
 # mongo_host = parser.get("MONGO", "mongo_host")
 mongo_port = int(os.getenv("mongo_port"))
 mongo_host = os.getenv("mongo_host")
+collection_name = os.getenv("collection_name")
+database_name = os.getenv("database_name")
+
 #
 # kafka_port = parser.get("KAFKA", "kafka_port")
 # kafka_ip = parser.get("KAFKA", "kafka_ip")
@@ -91,7 +93,7 @@ def helper_function(user_id, device_id, new_value):
         current_timestamp = datetime.now()
         message["current_timestamp"] = current_timestamp
         mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
-        user_data = mongo_utility.insert_one(message, "iot", "action_logs")
+        user_data = mongo_utility.insert_one(message, database_name, collection_name)
 
     except Exception as e:
         print(e)
