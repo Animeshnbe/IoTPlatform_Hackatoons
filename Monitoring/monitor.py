@@ -74,7 +74,7 @@ def fetch_module_status():
                     if module in down:
                         continue
                     else:
-                        module_status[module] = 'down'
+                        module_status[module] = False
                         obj = SSHUtil()
                         # a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
                         down.append(module)
@@ -83,7 +83,7 @@ def fetch_module_status():
                         down.remove(module)
 
                     # print(module + " up")
-                    module_status[module] = 'up'
+                    module_status[module] = True
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
                 json_data = {'status': module_status[module]}
                 logger.info("JSON TYPE : "+str(json_data))

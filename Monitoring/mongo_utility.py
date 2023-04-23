@@ -142,7 +142,7 @@ class MongoUtility():
             database_connection = self.__mongo_OBJ__[_database_name]
             print("JSON DATA : ", update_value)
             # print(type(update_value))
-            mongo_response = database_connection[collection_name].update_one({"moduleName": module_id},
+            mongo_response = database_connection[collection_name].update_one({"name": module_id},
                                                                              {"$set": {"status": update_value}},
                                                                              upsert=True)
 
