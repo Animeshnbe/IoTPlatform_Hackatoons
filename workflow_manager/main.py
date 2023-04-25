@@ -74,7 +74,7 @@ def get_service_port(service_name):
     return all_ports[service_name]
 
 if __name__ == '__main__':
-    client = pymongo.MongoClient(os.getenv("MONGO_URI"))
+    client = pymongo.MongoClient(os.getenv("MONGO_DB"))
     # db = client['IAS_Global']
     app = flask.Flask('deploymgr')
     @app.route('/accept_workflow', methods=['POST', 'GET'])

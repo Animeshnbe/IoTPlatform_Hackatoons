@@ -278,7 +278,7 @@ def deploy_util(app_name,username):
         # for item in sensors["sensor_instance_info"]:
         #     for instance in device_instance["sensors"][item["sensor_instance_type"]]:
         #         create_topic(instance,args.kafka_broker)
-        #         threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
+        #         threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,item["sensor_instance_type"],)).start()
         #         worklist.append({"type":"sensor","name":item,"device_id":instance})
         
         # print("worklist>> ",worklist)

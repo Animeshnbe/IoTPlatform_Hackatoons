@@ -6,5 +6,5 @@ from dotenv import load_dotenv
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-client = pymongo.MongoClient(os.getenv("MONGO_URI"))
+client = pymongo.MongoClient(os.getenv("MONGO_DB"))
 print(client)

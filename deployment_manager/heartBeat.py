@@ -4,14 +4,14 @@ import datetime
 import os
 from time import sleep
 
-import configparser
-config = configparser.ConfigParser()
-config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
-config.read(config_file_path)
-configs = config['local']
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 
-kafka = configs["KAFKA_URI"]
+kafka = os.getenv("KAFKA_URI")
 
 def heart_beat(module_name):
     producer = KafkaProducer(

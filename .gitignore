@@ -11,3 +11,4 @@ __pycache__/
 deployer/
 node_manager/*.json
 Authentication/
+workflow_manager/scan_data.py

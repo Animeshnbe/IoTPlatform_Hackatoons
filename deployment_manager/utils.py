@@ -11,34 +11,34 @@ import shutil
 import subprocess
 from azure.storage.blob import BlobServiceClient
 import zipfile
-from loggingUtility import logger_func
+from loggingUtility import init_logging
 
-logger = logger_func()
+logger = init_logging()
 
-import configparser
-config = configparser.ConfigParser()
+########### USING CONFIG INI
+# import configparser
+# config = configparser.ConfigParser()
 
-config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
-config.read(config_file_path)
+# config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+# config.read(config_file_path)
 
-configs = config['local']
+# configs = config['local']
+
+############# USING ENV
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 # from mockdata import produce
 from kafkautil import Consume
 
 import pymongo
-client = pymongo.MongoClient(configs["MONGO_CONN_STRING"])
+client = pymongo.MongoClient(os.getenv("MONGO_DB"))
 # client = pymongo.MongoClient(configs["MONGO_URI"],int(configs["MONGO_PORT"]))
 db = client['IAS_Global']
 
-from time import sleep
-
-deploy_requests = []
-
-def get_schedules(consumer):
-    # Consume messages from a topic
-    for message in consumer:
-        deploy_requests.append(message.value)
 
 def scheduler_consumer():
     consumer = Consume('sch_dep')
@@ -46,31 +46,18 @@ def scheduler_consumer():
         task = consumer.pull()
         print("Got ",task)
         if task['type']=='start':
-            deploy_util(task['appname'],task['user'])
+            try:
+                deploy_util(task['appname'],task['user'])
+            except:
+                continue
         else:
             stop_util(task['appname'],task['user'])
-    # consumer = KafkaConsumer(bootstrap_servers=[configs["KAFKA_URI"]],
-    #                          enable_auto_commit=True, auto_offset_reset="earliest",
-    #                          consumer_timeout_ms=1000, group_id="Test")
-
-    # consumer.subscribe('deploi')
-    # print("Waiting...")
-    # for message in consumer:
-    #     topic_info = f"topic: {message.topic} ({message.partition}|{message.offset})"
-    #     data = json.loads(message.value.decode('utf-8'))
-    #     message_info = f"key: {message.key}, {data}"
-    #     print(f"{topic_info}, {message_info}")
-
-    #     print("Now", message.value)
-    #     m = message.value
-    #     # deploy_util(m['appname'],m['user'])
-    #     consumer.commit()
 
 def download_zip(container, zip_file_name,extract=False):
     logger.info("ARGS +++++ %s %s",container,zip_file_name)
-    connect_str = "DefaultEndpointsProtocol=https;AccountName=iiithias;AccountKey=ogR3nO9ziIO3Ktohi9PuhEh7hWfyFF3WahB9dh5WtYa6InB5DSRh2bLltuVJD9c5BedHAgPgFwFP+AStoUbnEg==;EndpointSuffix=core.windows.net"
+    connect_str = os.getenv("AZURE_BLOB")
 
-    container_name = container         #container name
+    container_name = "admin" # container         #container name
     blob_name = zip_file_name          #zip file name
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
@@ -145,14 +132,17 @@ def errprinter(stderr):
     for line in iter(stderr.readline, ""):
         print(line, end="")
 
-def deploy_util(app_name,username,port=None,app_type='app'):
+def deploy_util(app_id,username,port=None,app_type='app'):
     # 1 verify user
     found = db['users'].find_one({'username':username})
-    app_found = db['app_uploads'].find_one({'filename':app_name})
-    print("Request received... ")
+    app_found = db['app_uploads'].find_one({'ind':app_id})
+    app_name = app_found['filename']
+    print("Request received... ",found, app_found)
     if not found:
+        print("No such user")
         return {"status":0,"message":"No such user"}
     if app_type=='app' and not app_found:
+        print("No such app")
         return {"status":0,"message":"No such app"}
     # elif 'admin' not in found["role"] and app_found["username"]!=username:
     #     return {"status":0,"message":"Invalid user"}
@@ -188,6 +178,8 @@ def deploy_util(app_name,username,port=None,app_type='app'):
             os.remove("../services/"+app_name+".zip")
         else:
             # 2 fetch code artifacts
+            if not os.path.exists("../uploads/"+app_owner):
+                os.makedirs("../uploads/"+app_owner)
             if not os.path.exists("../uploads/"+app_owner+"/"+app_name+".zip"):
                 download_zip(app_owner,app_name+".zip")
                 print("Downloaded files...")
@@ -198,7 +190,7 @@ def deploy_util(app_name,username,port=None,app_type='app'):
     ssh.exec_command("pip install requests")
 
     port='' if port is None else str(port)
-    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+" --name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"]+" --port="+port)
+    _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+" --name="+app_name.lower()+" --user="+username+" --kafka_broker="+os.getenv("KAFKA_URI")+" --kafka_rest="+os.getenv("KAFKA_REST")+" --port="+port)
     out = ""
     # threading.Thread(target=errprinter, args=(stderr,)).start()
     for line in iter(stdout.readline, ""):
@@ -229,7 +221,7 @@ def deploy_util(app_name,username,port=None,app_type='app'):
             else:
                 mydata = {"node_id": result["runtime_id"], "app": app_name, "deployed_by":username, "status": True,
                           "used_by":[username], "exposed_port":port,
-                        "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
+                        "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"],"port":result["port"]},
                         "created":dt.now(),"updated":dt.now()}
         else:
             mydata = {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
@@ -385,9 +377,9 @@ def restart_util(app_name,username,type="services",run_type="admin_restart"):
         ftp_client.put("../uploads/"+app_owner+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
         ftp_client.close()
         ssh.exec_command("pip install requests")
-        _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --name="+app_name.lower()+" --user="+username+" --kafka_broker="+configs["KAFKA_URI"]+" --kafka_rest="+configs["KAFKA_REST"])
+        _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --name="+app_name.lower()+" --user="+username+" --kafka_broker="+os.getenv("KAFKA_URI")+" --kafka_rest="+os.getenv("KAFKA_REST"))
         out = ""
-        # threading.Thread(target=errprinter, args=(stderr,)).start()
+        threading.Thread(target=errprinter, args=(stderr,)).start()
         for line in iter(stdout.readline, ""):
             print(line, end="")
             out = line
@@ -415,7 +407,7 @@ def restart_util(app_name,username,type="services",run_type="admin_restart"):
             res = subprocess.run("docker start "+app_found["node_id"], stdout=subprocess.PIPE, shell=True)           
             output = res.stdout.decode()
         if "Error" not in output:
-            db[type].update_one({"_id": app_found["_id"]}, {"$set": {"deployed_by":"monitor","status": True,"updated":dt.now()}})
+            db[type].update_one({"_id": app_found["_id"]}, {"$set": {"deployed_by":"admin","status": True,"updated":dt.now()}})
             status=1
         else:
             status=0
@@ -424,17 +416,42 @@ def restart_util(app_name,username,type="services",run_type="admin_restart"):
 
 def get_services(req):
     user = db["users"].find_one({"username":req["username"]})
+    if user is None:
+        return []
+    presults = []
     if user["role"]=="admin":
         results = list(db["services"].find())
+        results.extend(list(db["app_runtimes"].find()))
+        presults = list(db["vmconfig"].find())
     elif user["role"]=="app_admin":
         query = {"deployed_by" : req["username"]}
         results = list(db["app_runtimes"].find(query))
     else:
+        results = list(db["app_runtimes"].find())
         query = {"type" : "open"}
-        results = list(db["services"].find(query))
+        results.extend(list(db["services"].find(query)))
         query = {"status" : True}
         results.extend(list(db["app_runtimes"].find(query)))
-    return results
+    print(">>>>>>>>>>>>",presults)
+    res = []
+    for d in presults:
+        res.append({"name":d["name"],"link":d["ip"]+":"+str(d["port"]),"status":bool(d["status"]),"type":"system"})
+    print("Mid ",res)
+    for d in results:
+        link = ""
+        if "machine" in d:
+            link+=d["machine"]["ip"]+":"
+            if "port" in d["machine"]:
+                link+=d["machine"]["port"]
+            else:
+                link+="8080"
+        stype = "app"
+        if "service_type" in d:
+            stype = d["service_type"]
+        status = False if "status" not in d else d["status"]
+        res.append({"name":d["app"],"link":link,"status":status,"type":stype})
+    # print(results)
+    return res
 
 if __name__=="__main__":
     print(deploy_util("sample_app","Admin"))

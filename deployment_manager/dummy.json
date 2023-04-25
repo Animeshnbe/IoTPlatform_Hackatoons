@@ -1,0 +1,1032 @@
+{
+  "CO2": [
+    {
+      "id": 169,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH01-00"
+    }
+  ],
+  "Current": [
+    {
+      "id": 62,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-EM-KH04-00"
+    },
+    {
+      "id": 63,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-EM-KH04-01"
+    },
+    {
+      "id": 64,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-EM-KH04-02"
+    }
+  ],
+  "Flowrate": [
+    {
+      "id": 151,
+      "nodelatitude": 17.446267,
+      "nodelongitude": 78.349436,
+      "nodename": "WM-WF-PH02-70"
+    },
+    {
+      "id": 152,
+      "nodelatitude": 17.443129,
+      "nodelongitude": 78.348927,
+      "nodename": "WM-WF-PH03-70"
+    },
+    {
+      "id": 153,
+      "nodelatitude": 17.444958,
+      "nodelongitude": 78.349694,
+      "nodename": "WM-WF-KB04-70"
+    },
+    {
+      "id": 154,
+      "nodelatitude": 17.444973,
+      "nodelongitude": 78.349673,
+      "nodename": "WM-WF-KB04-71"
+    },
+    {
+      "id": 155,
+      "nodelatitude": 17.445046,
+      "nodelongitude": 78.349719,
+      "nodename": "WM-WF-KB04-72"
+    },
+    {
+      "id": 156,
+      "nodelatitude": 17.445016,
+      "nodelongitude": 78.349753,
+      "nodename": "WM-WF-KB04-73"
+    },
+    {
+      "id": 157,
+      "nodelatitude": 17.444881,
+      "nodelongitude": 78.346202,
+      "nodename": "WM-WF-PL00-70"
+    },
+    {
+      "id": 158,
+      "nodelatitude": 17.444881,
+      "nodelongitude": 78.346202,
+      "nodename": "WM-WF-PL00-71"
+    },
+    {
+      "id": 159,
+      "nodelatitude": 17.447324,
+      "nodelongitude": 78.347749,
+      "nodename": "WM-WF-PR00-70"
+    },
+    {
+      "id": 160,
+      "nodelatitude": 17.445016,
+      "nodelongitude": 78.349753,
+      "nodename": "WM-WF-PH04-70"
+    },
+    {
+      "id": 161,
+      "nodelatitude": 17.445016,
+      "nodelongitude": 78.349753,
+      "nodename": "WM-WF-PH04-71"
+    },
+    {
+      "id": 162,
+      "nodelatitude": 17.445584,
+      "nodelongitude": 78.348997,
+      "nodename": "WM-WF-BB04-70"
+    },
+    {
+      "id": 163,
+      "nodelatitude": 17.445544,
+      "nodelongitude": 78.349168,
+      "nodename": "WM-WF-BB04-71"
+    },
+    {
+      "id": 164,
+      "nodelatitude": 17.445518,
+      "nodelongitude": 78.350403,
+      "nodename": "WM-WF-VN04-70"
+    },
+    {
+      "id": 165,
+      "nodelatitude": 17.445482,
+      "nodelongitude": 78.3503,
+      "nodename": "WM-WF-VN04-71"
+    },
+    {
+      "id": 166,
+      "nodelatitude": 17.447059,
+      "nodelongitude": 78.346844,
+      "nodename": "WM-WF-PR04-70"
+    },
+    {
+      "id": 167,
+      "nodelatitude": 17.447378,
+      "nodelongitude": 78.347142,
+      "nodename": "WM-WF-PR04-71"
+    },
+    {
+      "id": 168,
+      "nodelatitude": 17.447644,
+      "nodelongitude": 78.347383,
+      "nodename": "WM-WF-PR04-72"
+    }
+  ],
+  "Frequency": [
+    {
+      "id": 65,
+      "nodelatitude": 17.445825,
+      "nodelongitude": 78.349215,
+      "nodename": "SL-VN03-00"
+    },
+    {
+      "id": 66,
+      "nodelatitude": 17.445484,
+      "nodelongitude": 78.3496514,
+      "nodename": "SL-VN02-00"
+    },
+    {
+      "id": 67,
+      "nodelatitude": 17.4472857,
+      "nodelongitude": 78.3495513,
+      "nodename": "SL-VN02-01"
+    },
+    {
+      "id": 68,
+      "nodelatitude": 17.445919,
+      "nodelongitude": 78.3497324,
+      "nodename": "SL-VN95-00"
+    },
+    {
+      "id": 69,
+      "nodelatitude": 17.447322,
+      "nodelongitude": 78.3486394,
+      "nodename": "SL-NI03-00"
+    },
+    {
+      "id": 70,
+      "nodelatitude": 17.447322,
+      "nodelongitude": 78.3486394,
+      "nodename": "SL-NI03-01"
+    },
+    {
+      "id": 71,
+      "nodelatitude": 17.4464517,
+      "nodelongitude": 78.3494681,
+      "nodename": "EM-NC-VN01-00"
+    },
+    {
+      "id": 72,
+      "nodelatitude": 17.4464517,
+      "nodelongitude": 78.3494681,
+      "nodename": "EM-NC-VN01-01"
+    },
+    {
+      "id": 73,
+      "nodelatitude": 17.4461651,
+      "nodelongitude": 78.3500722,
+      "nodename": "EM-NC-VN92-00"
+    },
+    {
+      "id": 74,
+      "nodelatitude": 17.4460269,
+      "nodelongitude": 78.3500387,
+      "nodename": "EM-NC-VN93-00"
+    },
+    {
+      "id": 75,
+      "nodelatitude": 17.4460269,
+      "nodelongitude": 78.3500387,
+      "nodename": "EM-NC-VN95-00"
+    },
+    {
+      "id": 76,
+      "nodelatitude": 17.448011,
+      "nodelongitude": 78.3484747,
+      "nodename": "EM-NC-BN01-00"
+    },
+    {
+      "id": 77,
+      "nodelatitude": 17.4472859,
+      "nodelongitude": 78.3489923,
+      "nodename": "EM-NC-NI93-00"
+    },
+    {
+      "id": 78,
+      "nodelatitude": 17.4447654,
+      "nodelongitude": 78.3457284,
+      "nodename": "EM-NC-SM00-00"
+    },
+    {
+      "id": 79,
+      "nodelatitude": 17.4447654,
+      "nodelongitude": 78.3457284,
+      "nodename": "EM-NC-NM00-00"
+    },
+    {
+      "id": 80,
+      "nodelatitude": 17.4453012,
+      "nodelongitude": 78.346465,
+      "nodename": "EM-NC-PL92-00"
+    },
+    {
+      "id": 81,
+      "nodelatitude": 17.4450136,
+      "nodelongitude": 78.3456231,
+      "nodename": "EM-NC-PL92-01"
+    },
+    {
+      "id": 82,
+      "nodelatitude": 17.4451835,
+      "nodelongitude": 78.346175,
+      "nodename": "EM-NC-PL98-00"
+    },
+    {
+      "id": 83,
+      "nodelatitude": 17.4481002,
+      "nodelongitude": 78.3480737,
+      "nodename": "EM-CR-TG00-00"
+    },
+    {
+      "id": 84,
+      "nodelatitude": 17.4481002,
+      "nodelongitude": 78.3480737,
+      "nodename": "EM-CR-TG00-01"
+    },
+    {
+      "id": 85,
+      "nodelatitude": 17.4468582,
+      "nodelongitude": 78.3469156,
+      "nodename": "EM-NC-DC00-00"
+    },
+    {
+      "id": 86,
+      "nodelatitude": 17.4463445,
+      "nodelongitude": 78.3477427,
+      "nodename": "EM-NC-SC00-00"
+    },
+    {
+      "id": 87,
+      "nodelatitude": 17.4465895,
+      "nodelongitude": 78.3479191,
+      "nodename": "EM-NC-SS00-00"
+    },
+    {
+      "id": 88,
+      "nodelatitude": 17.4470684,
+      "nodelongitude": 78.3475057,
+      "nodename": "EM-NC-DH00-00"
+    },
+    {
+      "id": 89,
+      "nodelatitude": 17.4470684,
+      "nodelongitude": 78.3475057,
+      "nodename": "EM-NC-YM00-00"
+    },
+    {
+      "id": 90,
+      "nodelatitude": 17.447805,
+      "nodelongitude": 78.3494389,
+      "nodename": "EM-NC-PH04-00"
+    },
+    {
+      "id": 91,
+      "nodelatitude": 17.4468582,
+      "nodelongitude": 78.3469156,
+      "nodename": "EM-NC-KN98-00"
+    },
+    {
+      "id": 92,
+      "nodelatitude": 17.446641,
+      "nodelongitude": 78.3471996,
+      "nodename": "EM-CR-KN95-00"
+    },
+    {
+      "id": 93,
+      "nodelatitude": 17.4468582,
+      "nodelongitude": 78.3469156,
+      "nodename": "EM-CR-KN95-01"
+    },
+    {
+      "id": 94,
+      "nodelatitude": 17.447222,
+      "nodelongitude": 78.347764,
+      "nodename": "EM-CR-PR01-01"
+    },
+    {
+      "id": 95,
+      "nodelatitude": 17.4457582,
+      "nodelongitude": 78.3473032,
+      "nodename": "EM-NC-SN00-00"
+    },
+    {
+      "id": 96,
+      "nodelatitude": 17.445133,
+      "nodelongitude": 78.352036,
+      "nodename": "EM-NC-PH01-03"
+    },
+    {
+      "id": 97,
+      "nodelatitude": 17.4468582,
+      "nodelongitude": 78.3469156,
+      "nodename": "EM-NC-AR00-00"
+    },
+    {
+      "id": 98,
+      "nodelatitude": 17.4458878,
+      "nodelongitude": 78.3501507,
+      "nodename": "EM-NC-VN95-01"
+    },
+    {
+      "id": 99,
+      "nodelatitude": 17.4457512,
+      "nodelongitude": 78.3503227,
+      "nodename": "EM-NC-VN01-02"
+    },
+    {
+      "id": 100,
+      "nodelatitude": 17.4458878,
+      "nodelongitude": 78.3501507,
+      "nodename": "EM-NC-VN03-00"
+    },
+    {
+      "id": 101,
+      "nodelatitude": 17.4458878,
+      "nodelongitude": 78.3501507,
+      "nodename": "EM-NC-VN95-02"
+    },
+    {
+      "id": 102,
+      "nodelatitude": 17.4434425,
+      "nodelongitude": 78.3485042,
+      "nodename": "EM-NC-BD01-00"
+    },
+    {
+      "id": 103,
+      "nodelatitude": 17.4438868,
+      "nodelongitude": 78.348427,
+      "nodename": "EM-NC-AN01-00"
+    },
+    {
+      "id": 104,
+      "nodelatitude": 17.445133,
+      "nodelongitude": 78.352036,
+      "nodename": "EM-NC-PH01-00"
+    },
+    {
+      "id": 105,
+      "nodelatitude": 17.4460854,
+      "nodelongitude": 78.3493846,
+      "nodename": "EM-NC-PH02-01"
+    },
+    {
+      "id": 106,
+      "nodelatitude": 17.4433833,
+      "nodelongitude": 78.348534,
+      "nodename": "EM-NC-PH03-00"
+    },
+    {
+      "id": 107,
+      "nodelatitude": 17.4439351,
+      "nodelongitude": 78.3486222,
+      "nodename": "EM-NC-FQ93-00"
+    },
+    {
+      "id": 108,
+      "nodelatitude": 17.4461385,
+      "nodelongitude": 78.3499542,
+      "nodename": "EM-CR-VN01-00"
+    },
+    {
+      "id": 109,
+      "nodelatitude": 17.4458005,
+      "nodelongitude": 78.3501899,
+      "nodename": "EM-CR-VN02-00"
+    },
+    {
+      "id": 110,
+      "nodelatitude": 17.4458005,
+      "nodelongitude": 78.3501899,
+      "nodename": "EM-CR-VN03-00"
+    },
+    {
+      "id": 111,
+      "nodelatitude": 17.4447344,
+      "nodelongitude": 78.3510992,
+      "nodename": "EM-CR-SB00-00"
+    },
+    {
+      "id": 112,
+      "nodelatitude": 17.4447344,
+      "nodelongitude": 78.3510992,
+      "nodename": "EM-CR-SB00-01"
+    },
+    {
+      "id": 113,
+      "nodelatitude": 17.447384,
+      "nodelongitude": 78.348705,
+      "nodename": "EM-CR-NI02-00"
+    },
+    {
+      "id": 114,
+      "nodelatitude": 17.447384,
+      "nodelongitude": 78.348705,
+      "nodename": "EM-CR-NI02-01"
+    },
+    {
+      "id": 115,
+      "nodelatitude": 17.447384,
+      "nodelongitude": 78.348705,
+      "nodename": "EM-CR-NI02-02"
+    },
+    {
+      "id": 116,
+      "nodelatitude": 17.4453859,
+      "nodelongitude": 78.3493152,
+      "nodename": "EM-CR-BC00-00"
+    },
+    {
+      "id": 117,
+      "nodelatitude": 17.4449695,
+      "nodelongitude": 78.3460456,
+      "nodename": "EM-CR-PL01-00"
+    },
+    {
+      "id": 118,
+      "nodelatitude": 17.4473495,
+      "nodelongitude": 78.3478376,
+      "nodename": "EM-CR-PR01-00"
+    },
+    {
+      "id": 119,
+      "nodelatitude": 17.4481827,
+      "nodelongitude": 78.3482956,
+      "nodename": "EM-CR-BN01-00"
+    },
+    {
+      "id": 120,
+      "nodelatitude": 17.4481827,
+      "nodelongitude": 78.3482956,
+      "nodename": "EM-CR-BN01-01"
+    }
+  ],
+  "Light_Status": [
+    {
+      "id": 121,
+      "nodelatitude": 17.44507,
+      "nodelongitude": 78.349856,
+      "nodename": "WN-LP01-03"
+    },
+    {
+      "id": 122,
+      "nodelatitude": 17.445146,
+      "nodelongitude": 78.350022,
+      "nodename": "WN-LP02-02"
+    },
+    {
+      "id": 123,
+      "nodelatitude": 17.445343,
+      "nodelongitude": 78.349779,
+      "nodename": "WN-LP03-02"
+    },
+    {
+      "id": 124,
+      "nodelatitude": 17.445564,
+      "nodelongitude": 78.349507,
+      "nodename": "WN-LP04-02"
+    },
+    {
+      "id": 125,
+      "nodelatitude": 17.445802,
+      "nodelongitude": 78.349192,
+      "nodename": "WN-LP05-02"
+    },
+    {
+      "id": 126,
+      "nodelatitude": 17.44541,
+      "nodelongitude": 78.350954,
+      "nodename": "WN-LP06-01"
+    },
+    {
+      "id": 127,
+      "nodelatitude": 17.445241,
+      "nodelongitude": 78.350744,
+      "nodename": "WN-LP07-01"
+    },
+    {
+      "id": 128,
+      "nodelatitude": 17.445032,
+      "nodelongitude": 78.350564,
+      "nodename": "WN-LP08-01"
+    },
+    {
+      "id": 129,
+      "nodelatitude": 17.444882,
+      "nodelongitude": 78.35041,
+      "nodename": "WN-LP09-01"
+    },
+    {
+      "id": 130,
+      "nodelatitude": 17.444693,
+      "nodelongitude": 78.350241,
+      "nodename": "WN-LP10-01"
+    },
+    {
+      "id": 131,
+      "nodelatitude": 17.444449,
+      "nodelongitude": 78.350024,
+      "nodename": "WN-LP11-01"
+    },
+    {
+      "id": 132,
+      "nodelatitude": 17.444334,
+      "nodelongitude": 78.349925,
+      "nodename": "WN-LP12-01"
+    },
+    {
+      "id": 133,
+      "nodelatitude": 17.444442,
+      "nodelongitude": 78.349712,
+      "nodename": "WN-LP13-01"
+    },
+    {
+      "id": 134,
+      "nodelatitude": 17.444572,
+      "nodelongitude": 78.34956,
+      "nodename": "WN-LP14-01"
+    },
+    {
+      "id": 135,
+      "nodelatitude": 17.444763,
+      "nodelongitude": 78.349306,
+      "nodename": "WN-LP15-01"
+    },
+    {
+      "id": 136,
+      "nodelatitude": 17.444882,
+      "nodelongitude": 78.349172,
+      "nodename": "WN-LP16-01"
+    },
+    {
+      "id": 137,
+      "nodelatitude": 17.445018,
+      "nodelongitude": 78.348979,
+      "nodename": "WN-LP17-01"
+    },
+    {
+      "id": 138,
+      "nodelatitude": 17.445146,
+      "nodelongitude": 78.348844,
+      "nodename": "WN-LP18-01"
+    },
+    {
+      "id": 139,
+      "nodelatitude": 17.445326,
+      "nodelongitude": 78.348596,
+      "nodename": "WN-LP19-01"
+    },
+    {
+      "id": 140,
+      "nodelatitude": 17.445435,
+      "nodelongitude": 78.348418,
+      "nodename": "WN-LP20-01"
+    },
+    {
+      "id": 141,
+      "nodelatitude": 17.445764,
+      "nodelongitude": 78.348406,
+      "nodename": "WN-LP21-01"
+    },
+    {
+      "id": 142,
+      "nodelatitude": 17.445964,
+      "nodelongitude": 78.348601,
+      "nodename": "WN-LP22-01"
+    },
+    {
+      "id": 143,
+      "nodelatitude": 17.446134,
+      "nodelongitude": 78.348763,
+      "nodename": "WN-LP23-01"
+    },
+    {
+      "id": 144,
+      "nodelatitude": 17.446267,
+      "nodelongitude": 78.348872,
+      "nodename": "WN-LP24-01"
+    },
+    {
+      "id": 145,
+      "nodelatitude": 17.446471,
+      "nodelongitude": 78.349039,
+      "nodename": "WN-LP25-01"
+    },
+    {
+      "id": 146,
+      "nodelatitude": 17.446943,
+      "nodelongitude": 78.349084,
+      "nodename": "WN-LP26-01"
+    },
+    {
+      "id": 147,
+      "nodelatitude": 17.446703,
+      "nodelongitude": 78.349253,
+      "nodename": "WN-LP27-01"
+    },
+    {
+      "id": 148,
+      "nodelatitude": 17.446915,
+      "nodelongitude": 78.349451,
+      "nodename": "WN-LP28-01"
+    },
+    {
+      "id": 149,
+      "nodelatitude": 17.446889,
+      "nodelongitude": 78.349611,
+      "nodename": "WN-LP29-01"
+    },
+    {
+      "id": 150,
+      "nodelatitude": 17.44671,
+      "nodelongitude": 78.349837,
+      "nodename": "WN-LP30-01"
+    }
+  ],
+  "PM10": [
+    {
+      "id": 1,
+      "nodelatitude": 17.44599,
+      "nodelongitude": 78.35142,
+      "nodename": "AQ-MG00-00"
+    },
+    {
+      "id": 2,
+      "nodelatitude": 17.44802,
+      "nodelongitude": 78.34839,
+      "nodename": "AQ-BN00-00"
+    },
+    {
+      "id": 3,
+      "nodelatitude": 17.44661,
+      "nodelongitude": 78.34718,
+      "nodename": "AQ-KN00-00"
+    },
+    {
+      "id": 4,
+      "nodelatitude": 17.445604,
+      "nodelongitude": 78.347483,
+      "nodename": "AQ-SN00-00"
+    },
+    {
+      "id": 5,
+      "nodelatitude": 17.445825,
+      "nodelongitude": 78.349215,
+      "nodename": "AQ-VN90-00"
+    },
+    {
+      "id": 6,
+      "nodelatitude": 17.44487,
+      "nodelongitude": 78.34952,
+      "nodename": "AQ-KH00-00"
+    },
+    {
+      "id": 7,
+      "nodelatitude": 17.443936,
+      "nodelongitude": 78.348436,
+      "nodename": "AQ-AN00-00"
+    },
+    {
+      "id": 8,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "AQ-PH03-00"
+    },
+    {
+      "id": 9,
+      "nodelatitude": 17.44509,
+      "nodelongitude": 78.34605,
+      "nodename": "AQ-PL00-00"
+    },
+    {
+      "id": 10,
+      "nodelatitude": 17.44697,
+      "nodelongitude": 78.34854,
+      "nodename": "AQ-FG00-00"
+    },
+    {
+      "id": 11,
+      "nodelatitude": 17.44507,
+      "nodelongitude": 78.34989,
+      "nodename": "AQ-AD95-00"
+    },
+    {
+      "id": 12,
+      "nodelatitude": 17.4676,
+      "nodelongitude": 78.3495,
+      "nodename": "SR-AQ-VN01-00"
+    },
+    {
+      "id": 13,
+      "nodelatitude": 17.443256,
+      "nodelongitude": 78.348927,
+      "nodename": "SR-AQ-VN01-01"
+    },
+    {
+      "id": 14,
+      "nodelatitude": 17.444958,
+      "nodelongitude": 78.349694,
+      "nodename": "SR-AQ-VN01-02"
+    },
+    {
+      "id": 15,
+      "nodelatitude": 17.444973,
+      "nodelongitude": 78.349673,
+      "nodename": "SR-AQ-KH95-01"
+    },
+    {
+      "id": 16,
+      "nodelatitude": 17.445046,
+      "nodelongitude": 78.349719,
+      "nodename": "SR-AQ-KH95-02"
+    }
+  ],
+  "Pressure": [
+    {
+      "id": 56,
+      "nodelatitude": 17.445793,
+      "nodelongitude": 78.351444,
+      "nodename": "WM-WF-PH01-00"
+    },
+    {
+      "id": 57,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "WM-WF-PH03-00"
+    },
+    {
+      "id": 58,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "WM-WF-PH03-01"
+    },
+    {
+      "id": 59,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "WM-WF-PH03-02"
+    },
+    {
+      "id": 60,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "WM-WF-PH03-03"
+    },
+    {
+      "id": 61,
+      "nodelatitude": 17.445369,
+      "nodelongitude": 78.349937,
+      "nodename": "WM-WF-VN01-00"
+    }
+  ],
+  "Temperature": [
+    {
+      "id": 17,
+      "nodelatitude": 17.445402,
+      "nodelongitude": 78.349875,
+      "nodename": "WM-WD-VN00-00"
+    },
+    {
+      "id": 18,
+      "nodelatitude": 17.44593,
+      "nodelongitude": 78.34917,
+      "nodename": "WM-WD-VN90-00"
+    },
+    {
+      "id": 19,
+      "nodelatitude": 17.445467,
+      "nodelongitude": 78.350027,
+      "nodename": "WM-WD-VN01-00"
+    },
+    {
+      "id": 20,
+      "nodelatitude": 17.445369,
+      "nodelongitude": 78.349937,
+      "nodename": "WM-WD-VN01-01"
+    },
+    {
+      "id": 21,
+      "nodelatitude": 17.445793,
+      "nodelongitude": 78.351444,
+      "nodename": "WM-WD-PH01-00"
+    },
+    {
+      "id": 22,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-BN04-00"
+    },
+    {
+      "id": 23,
+      "nodelatitude": 17.4447481,
+      "nodelongitude": 78.3499831,
+      "nodename": "WM-WD-AD98-00"
+    },
+    {
+      "id": 24,
+      "nodelatitude": 17.444876,
+      "nodelongitude": 78.34619,
+      "nodename": "WM-WD-PL00-00"
+    },
+    {
+      "id": 25,
+      "nodelatitude": 17.446243,
+      "nodelongitude": 78.349287,
+      "nodename": "WM-WD-PH02-00"
+    },
+    {
+      "id": 26,
+      "nodelatitude": 17.443299,
+      "nodelongitude": 78.348365,
+      "nodename": "WM-WD-PH03-00"
+    },
+    {
+      "id": 27,
+      "nodelatitude": 17.44661,
+      "nodelongitude": 78.34718,
+      "nodename": "WM-WD-KN00-00"
+    },
+    {
+      "id": 28,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-BN01-00"
+    },
+    {
+      "id": 29,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-KH95-00"
+    },
+    {
+      "id": 30,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-KH01-00"
+    },
+    {
+      "id": 31,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-KH03-00"
+    },
+    {
+      "id": 32,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-NI00-00"
+    },
+    {
+      "id": 33,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WM-WD-BN00-00"
+    },
+    {
+      "id": 34,
+      "nodelatitude": 17.4450498,
+      "nodelongitude": 78.3462987,
+      "nodename": "WM-WD-PL04-01"
+    },
+    {
+      "id": 35,
+      "nodelatitude": 17.4450498,
+      "nodelongitude": 78.3462987,
+      "nodename": "WM-WD-BK04-00"
+    },
+    {
+      "id": 36,
+      "nodelatitude": 17.4450498,
+      "nodelongitude": 78.3462987,
+      "nodename": "WM-WD-PL04-00"
+    },
+    {
+      "id": 37,
+      "nodelatitude": 17.445825,
+      "nodelongitude": 78.349215,
+      "nodename": "WE-VN04-00"
+    },
+    {
+      "id": 38,
+      "nodelatitude": 17.443674,
+      "nodelongitude": 78.3483606,
+      "nodename": "WE-BN04-00"
+    },
+    {
+      "id": 39,
+      "nodelatitude": 17.5294514,
+      "nodelongitude": 78.4654442,
+      "nodename": "WE-GS04-00"
+    },
+    {
+      "id": 40,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH00-00"
+    },
+    {
+      "id": 41,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH00-01"
+    },
+    {
+      "id": 42,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH01-00"
+    },
+    {
+      "id": 43,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH03-00"
+    },
+    {
+      "id": 44,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH03-01"
+    },
+    {
+      "id": 45,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH03-02"
+    },
+    {
+      "id": 46,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH95-00"
+    },
+    {
+      "id": 47,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-OC-GW-KH95-01"
+    },
+    {
+      "id": 48,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH00-00"
+    },
+    {
+      "id": 49,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH00-01"
+    },
+    {
+      "id": 50,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH00-02"
+    },
+    {
+      "id": 51,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH00-03"
+    },
+    {
+      "id": 52,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH03-00"
+    },
+    {
+      "id": 53,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH03-01"
+    },
+    {
+      "id": 54,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH03-03"
+    },
+    {
+      "id": 55,
+      "nodelatitude": 17.44511,
+      "nodelongitude": 78.34974,
+      "nodename": "SR-AQ-KH95-00"
+    }
+  ]
+}

@@ -1,19 +1,25 @@
 from kafka import KafkaProducer, KafkaConsumer
 from json import dumps, loads
 import os
-import configparser
-config = configparser.ConfigParser()
+from os.path import join, dirname
+from dotenv import load_dotenv
 
-config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
-config.read(config_file_path)
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
-configs = config['local']
+# import configparser
+# config = configparser.ConfigParser()
+
+# config_file_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+# config.read(config_file_path)
+
+# configs = config['local']
 
 # KAFKA_IP_PORT = '192.168.137.51:19092'
 
 class Produce:
     def __init__(self):
-        self.my_producer = KafkaProducer(bootstrap_servers = [configs["KAFKA_URI"]], value_serializer = lambda x:dumps(x).encode('utf-8'))
+        self.my_producer = KafkaProducer(bootstrap_servers = [os.getenv("KAFKA_URI")], value_serializer = lambda x:dumps(x).encode('utf-8'))
     
     def push(self,topic,key,message):
         try:
@@ -25,7 +31,7 @@ class Produce:
 
 class Consume:
     def __init__(self,topic):
-        self.my_consumer = KafkaConsumer(topic, bootstrap_servers = [configs["KAFKA_URI"]], group_id=f'group_{topic}', value_deserializer = lambda x : loads(x.decode('utf-8')))
+        self.my_consumer = KafkaConsumer(topic, bootstrap_servers = [os.getenv("KAFKA_URI")], group_id=f'group_{topic}', value_deserializer = lambda x : loads(x.decode('utf-8')))
     
     def pull(self):
         flag = 1

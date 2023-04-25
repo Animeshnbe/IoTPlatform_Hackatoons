@@ -76,7 +76,63 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df.write(runcmd.rstrip())
     df.close()
 
+def alloc_device(count,devices,loc):
+    if loc is None:
+        if count==-1:
+            ans = [device['id'] for device in devices]
+        else:
+            ans = []
+            for device in devices:
+                if count==0:
+                    break
+                ans.append(device['id'])
+                count-=1
+            while count>0:
+                ans.append(-1)
+    else:
+        if count==-1:
+            ans = []
+            for device in devices:
+                if 'tl' in loc and device['nodelatitude']>=loc['tl'][0] and device['nodelatitude']<=loc['br'][0] \
+                    and device['nodelongitude']<=loc['tl'][1] and device['nodelongitude']>=loc['br'][1]:
+                    ans.append(device['id'])
+        else:
+            ans = []
+            for device in devices:
+                if count==0:
+                    break
+                if 'tl' in loc and device['nodelatitude']>=loc['tl'][0] and device['nodelatitude']<=loc['br'][0] \
+                    and device['nodelongitude']<=loc['tl'][1] and device['nodelongitude']>=loc['br'][1]:
+                    ans.append(device['id'])
+                    count-=1
+            while count>0:
+                ans.append(-1)
+    return ans
+
+
 def fetch_n_map_sensors(sensors,controllers):
+    with open("dummy.json", "r") as f:
+        meta = json.load(f)
+
+    ans = {"sensors":{},"controllers":{}}
+    # print(sensors)
+    # print([d["sensortype"] for d in devices])
+    for sensor in sensors:
+        for cat,devices in meta.items():
+            if cat==sensor["sensor_instance_type"]:
+                # if "location" in sensor and sensor["location"]==[device]:
+                loc = None if 'location' not in sensor else sensor['location']
+                ans["sensors"][cat] = alloc_device(sensor["sensor_instance_count"],devices,loc)
+
+    for sensor in controllers:
+        for cat,devices in meta.items():
+            if cat==sensor["controller_instance_type"]:
+                loc = None if 'location' not in sensor else sensor['location']
+                ans["controllers"][cat] = alloc_device(sensor["controller_instance_count"],devices,loc)
+
+    return ans
+
+def fetch_n_map_sensors2(sensors,controllers):
     # devices = requests.get("http://192.168.137.51:8890/").json()
     with open("dummy.json", "r") as f:
         devices = json.load(f)
@@ -113,7 +169,7 @@ def fetch_n_map_sensors(sensors,controllers):
 
     return ans
 
-def check_request(fp, worklist, consumer_group, base_uri, name="test"):  
+def check_request(fp, worklist, consumer_group, base_uri, notif=None, name="test"):  
     # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",worklist)
     res = requests.get(f"http://{base_uri}/topics").json()
 
@@ -130,7 +186,8 @@ import requests
 import json
         
 devices = {str(worklist)}
-def attach_sensors(names):
+notif = {notif}
+def attach_sensors(names, receiver="wolf.blunt0714@gmail.com"):
     # Register consumer
     res = requests.post(
         url="http://{base_uri}/consumers/{consumer_group}",
@@ -167,6 +224,17 @@ def attach_sensors(names):
             headers={{"Accept": "application/vnd.kafka.json.v2+json"}}).json()
         if res:
             # print(res)
+            name, value = res[-1]["value"]["content"].split(":")
+            name = name[2:-1]
+            value = float(value[1:-1])
+            if "sms" in notif:
+                if name in notif["sms"]:
+                    if notif["sms"][name][1]<value or notif["sms"][name][0]>value:
+                        requests.post("http://10.2.130.191:9825/messageAPI", json={{"number":notif["mobile"], "message":name+" has got anomalous value "+str(value)}})
+            if "email" in notif:
+                if name in notif["email"]:
+                    if notif["email"][name][1]<value or notif["email"][name][0]>value:
+                        requests.post("http://10.2.130.191:9825/emailAPI", json={{"email":receiver, "subject":"Platform Alerts", "text":name+" has got anomalous value "+str(value)}})
             yield res
 
 def send_controller(controller_name,action,instance=None):
@@ -193,6 +261,7 @@ def deploy_util(app_name,username):
     ver = "latest"
     src = ""
     file_path = app_name
+    configs={}
     if args.app_type=='app':
         with open(file_path+'/configuration/appmeta.json') as f:
             configs = json.load(f)
@@ -222,17 +291,21 @@ def deploy_util(app_name,username):
         # device_instance = {"sensors":{"temperature":[1,2,3],"humidity":[4],"brightness":[5,6]},
         #                    "controllers":{"temperature":[1],"brightness":[6]}}
         print("Got current device ids: ",)
+
+        if os.path.exists(file_path+'/configuration/notification.json'):
+            with open(file_path+'/configuration/notification.json') as f:
+                modes = json.load(f)['type']
         
         worklist = []
         for item in sensors["sensor_instance_info"]:
             for instance in device_instance["sensors"][item["sensor_instance_type"]]:
                 create_topic(instance,args.kafka_broker)
-                threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,)).start()
+                threading.Thread(target=produce, args=(instance,item["rate"],args.kafka_broker,item["sensor_instance_type"],)).start()
                 worklist.append({"type":"sensor","name":item,"device_id":instance})
         
         print("worklist>> ",worklist)
         # build adapter
-        check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest)
+        check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest,modes)
 
         # 4 build and deploy
         print('docker build -t '+app_name+':'+ver+' ' +file_path+src)
@@ -283,7 +356,9 @@ def deploy_util(app_name,username):
     result = subprocess.run("docker ps -aqf name="+container_name, stdout=subprocess.PIPE, shell=True)
     output = result.stdout.decode()[:-1]
     if len(output)>0:
-        return {"status":1,"runtime_id":output,"vol":fp,"message":"Deployed successfully"}
+        if "port" in configs:
+            return {"status":1,"runtime_id":output,"vol":fp,"message":"Deployed successfully","port":str(configs["port"])}
+        return {"status":1,"runtime_id":output,"vol":fp,"message":"Deployed successfully","port":"8080"}
     else:
         return {"status":0,"message":"Could not move the files to deploy"}
 

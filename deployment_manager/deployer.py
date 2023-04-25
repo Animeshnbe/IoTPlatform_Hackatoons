@@ -51,7 +51,7 @@ def req_handler():
         # username in req
         return flask.jsonify(get_services(req))
 
-    @app.route('/test', methods=['POST'])
+    @app.route('/test', methods=['POST', 'GET'])
     def test():
         print("Json ",flask.request.get_json())
         return flask.jsonify({"status":"ok","runtime_id":0})
