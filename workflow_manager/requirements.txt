@@ -1,6 +1,7 @@
-python-dotenv
 Flask
 paramiko
+prometheus-flask-exporter
 PyJWT
 pymongo
+python-dotenv
 pyyaml

@@ -10,6 +10,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 import jwt
 from functools import wraps
+from prometheus_flask_exporter import PrometheusMetrics
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv()
@@ -79,6 +80,7 @@ def get_service_port(service_name):
 
 app = flask.Flask('workflow')
 app.config['SECRET_KEY'] = 'mysecretkey'
+metrics = PrometheusMetrics(app)
 
 def authorized(f):
     @wraps(f)
@@ -215,6 +217,13 @@ if __name__ == '__main__':
         except Exception as ex:
             print(ex)
             return flask.jsonify({"status":0, "message":"Could not stop your workflow"})
+        
+    metrics.register_default(
+		metrics.counter(
+			'by_path_counter', 'Request count by request paths',
+			labels={'path': lambda: flask.request.path}
+		)
+	)
     app.run(host = '0.0.0.0',port = 8886, threaded=True)
 
 
