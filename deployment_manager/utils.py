@@ -199,7 +199,7 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     # out = stdout.read().decode()[:-1]
     print("SSH OUT>>>>>>>>>>>>>", out.split('\n')[-1])
     # print("SSH ERR>>>>>>>>>>>>>", stderr.read().decode())
-
+    ssh.close()
     result = json.loads(out.split('\n')[-1].replace('\'','\"'))
     # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
@@ -423,7 +423,7 @@ def get_services(req):
         results = list(db["services"].find())
         results.extend(list(db["app_runtimes"].find()))
         presults = list(db["vmconfig"].find())
-    elif user["role"]=="app_admin":
+    elif user["role"] in ["app_admin","developer"]:
         query = {"deployed_by" : req["username"]}
         results = list(db["app_runtimes"].find(query))
     else:
@@ -436,6 +436,9 @@ def get_services(req):
     res = []
     for d in presults:
         res.append({"name":d["name"],"link":d["ip"]+":"+str(d["port"]),"status":bool(d["status"]),"type":"system"})
+    if user["role"] in ["admin","app_admin","developer"]:
+        for wf in db["workflows"].find():
+            res.append({"name":wf["name"],"link":os.getenv("NODE_RED_IP")+":1880","status":True,"type":"workflow"})
     print("Mid ",res)
     for d in results:
         link = ""
