@@ -137,7 +137,7 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     found = db['users'].find_one({'username':username})
     app_found = db['app_uploads'].find_one({'ind':app_id})
     app_name = app_found['filename']
-    print("Request received... ",found, app_found)
+    print("Request received... ", app_found)
     if not found:
         print("No such user")
         return {"status":0,"message":"No such user"}
@@ -147,16 +147,47 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     # elif 'admin' not in found["role"] and app_found["username"]!=username:
     #     return {"status":0,"message":"Invalid user"}
     
-    print("Deploying... ")
+    if app_type=='service':
+        collection = "services"
+    else:
+        collection = "app_runtimes"
+    if collection in db.list_collection_names():
+        print("The collection already exists.")
+    else:
+        # Create the collection
+        collection = db.create_collection(collection)
+    collection = db[collection]
+
+    if app_type=="app":
+        mydata = {"app": (username+"_"+app_name).lower(), "deployed_by":username, "status": False, "detailed_status":"Deployment started"}
+        collection.insert_one(mydata)
+    logger.info("Deploying... ",app_found['filename'])
     app_owner = app_found["username"].lower()
     # same docker network as node manager
-    resp = requests.post("http://localhost:8887",json={"port":port}).json()
+    # node_manager = db["vmconfig"].find_one({"name":"node_manager"})
+
+    try:
+        # print("Hitting node mgr")
+        # resp = requests.post("http://"+node_manager["ip"]+":"+node_manager["port"],json={"port":port}, timeout=5).json()
+        resp = requests.post("http://localhost:8887",json={"port":port}, timeout=5).json()
+        resp.raise_for_status()  # raise an exception if the response has an error status code
+        print("Received response:", resp.json())
+    except requests.exceptions.HTTPError as err:
+        logger.error("HTTP error occurred:", err)
+        return {"status":0,"message":"HTTP error."}
+    except Exception as err:
+        logger.error("An error occurred:", err)
+        return {"status":0,"message":"The request to get VM timed out."}
+    
+    logger.info("GOT>>>>>>>>>> ",resp)
     if resp["msg"]!="OK":
         return {"status":0,"message":resp["msg"]}
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+    if app_type=="app":
+        collection.find_one_and_update({"app": (username+"_"+app_name).lower()}, { '$set': {"detailed_status":"Connected to allocated VM"}})
     ftp_client=ssh.open_sftp()
     try:
         ftp_client.stat("uploads/"+app_name.lower())
@@ -182,17 +213,18 @@ def deploy_util(app_id,username,port=None,app_type='app'):
                 os.makedirs("../uploads/"+app_owner)
             if not os.path.exists("../uploads/"+app_owner+"/"+app_name+".zip"):
                 download_zip(app_owner,app_name+".zip")
-                print("Downloaded files...")
+                logger.info("Downloaded files...")
             
             ftp_client.put("../uploads/"+app_owner+"/"+app_name+".zip","./uploads/"+app_name.lower()+"/"+app_name+".zip")
-            print("Sent the app...")
+            logger.info("Sent the app...")
+            collection.find_one_and_update({"app": (username+"_"+app_name).lower()}, { '$set': {"detailed_status":"Fetched your scripts"}})
     ftp_client.close()
     ssh.exec_command("pip install requests")
 
     port='' if port is None else str(port)
     _, stdout, stderr = ssh.exec_command("cd uploads/"+app_name.lower()+" && python3 init.py --app_type="+app_type+" --name="+app_name.lower()+" --user="+username+" --kafka_broker="+os.getenv("KAFKA_URI")+" --kafka_rest="+os.getenv("KAFKA_REST")+" --port="+port)
     out = ""
-    # threading.Thread(target=errprinter, args=(stderr,)).start()
+    threading.Thread(target=errprinter, args=(stderr,)).start()
     for line in iter(stdout.readline, ""):
         print(line, end="")
         out = line
@@ -204,16 +236,6 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     # result = {'status':1,'message':"Deployed Successfully"}
     if result['status']==1:
         if app_type=='service':
-            collection = "services"
-        else:
-            collection = "app_runtimes"
-        if collection in db.list_collection_names():
-            print("The collection already exists.")
-        else:
-            # Create the collection
-            collection = db.create_collection(collection)
-        collection = db[collection]
-        if app_type=='service':
             if result['message']=="Already deployed":
                 running_service = collection.find_one({"app":app_name})
                 running_service["used_by"].append(username)
@@ -223,11 +245,13 @@ def deploy_util(app_id,username,port=None,app_type='app'):
                           "used_by":[username], "exposed_port":port,
                         "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"],"port":result["port"]},
                         "created":dt.now(),"updated":dt.now()}
+                collection.insert_one(mydata)
         else:
-            mydata = {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
+            collection.find_one_and_update({"app": (username+"_"+app_name).lower()}, { '$set': {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
                     "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
-                    "created":dt.now(),"updated":dt.now()}
-        collection.insert_one(mydata)
+                    "created":dt.now(),"updated":dt.now(), "detailed_status":"Running"}})
+            # mydata = 
+        # collection.insert_one(mydata)
 
     return result
 
