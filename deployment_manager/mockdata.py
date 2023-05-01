@@ -47,9 +47,9 @@ def produce(sensor,rate,ip=IP,instance=None):
     for i in range(100):
     # while True:
         if instance=="Temperature":
-            producer.send(str(sensor), key=None,value={"content":"{'"+instance+"': "+random.randint(20,40)+"}"})
+            producer.send(str(sensor), key=None,value={"content":"{'"+instance+"': "+str(random.randint(20,40))+"}"})
         else:
-            producer.send(str(sensor), key=None,value={"content":"{'"+instance+"': "+random.randint(10,31)+"}"})
+            producer.send(str(sensor), key=None,value={"content":"{'"+instance+"': "+str(random.randint(10,31))+"}"})
         # if instance is None:
         #     # call_sensor_instance
         #     producer.send(str(sensor), key=None,value={"content":random.randint(1,100)})
