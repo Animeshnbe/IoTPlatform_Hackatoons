@@ -137,7 +137,7 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     found = db['users'].find_one({'username':username})
     app_found = db['app_uploads'].find_one({'ind':app_id})
     app_name = app_found['filename']
-    print("Request received... ", app_found)
+    logger.info("Request received... %s", app_found)
     if not found:
         print("No such user")
         return {"status":0,"message":"No such user"}
@@ -161,31 +161,35 @@ def deploy_util(app_id,username,port=None,app_type='app'):
     if app_type=="app":
         mydata = {"app": (username+"_"+app_name).lower(), "deployed_by":username, "status": False, "detailed_status":"Deployment started"}
         collection.insert_one(mydata)
-    logger.info("Deploying... ",app_found['filename'])
+    logger.info("Deploying... %s",app_found['filename'])
     app_owner = app_found["username"].lower()
     # same docker network as node manager
     # node_manager = db["vmconfig"].find_one({"name":"node_manager"})
 
-    try:
-        # print("Hitting node mgr")
-        # resp = requests.post("http://"+node_manager["ip"]+":"+node_manager["port"],json={"port":port}, timeout=5).json()
-        resp = requests.post("http://localhost:8887",json={"port":port}, timeout=5).json()
-        resp.raise_for_status()  # raise an exception if the response has an error status code
-        print("Received response:", resp.json())
-    except requests.exceptions.HTTPError as err:
-        logger.error("HTTP error occurred:", err)
-        return {"status":0,"message":"HTTP error."}
-    except Exception as err:
-        logger.error("An error occurred:", err)
-        return {"status":0,"message":"The request to get VM timed out."}
+    # try:
+    #     # print("Hitting node mgr")
+    #     # resp = requests.post("http://"+node_manager["ip"]+":"+node_manager["port"],json={"port":port}, timeout=5).json()
+    #     resp = requests.post("http://localhost:8887",json={"port":port}, timeout=5).json()
+    #     resp.raise_for_status()  # raise an exception if the response has an error status code
+    #     print("Received response:", resp.json())
+    # except requests.exceptions.HTTPError as err:
+    #     logger.error("HTTP error occurred:", err)
+    #     return {"status":0,"message":"HTTP error."}
+    # except Exception as err:
+    #     logger.error("An error occurred:", err)
+    #     return {"status":0,"message":"The request to get VM timed out."}
     
-    logger.info("GOT>>>>>>>>>> ",resp)
+    resp = {"msg":"OK", "ip":"172.26.113.180", "username":"anm8", "password":"marvel"}
+    # print("GOT>>>>>>>>>> ",resp)
     if resp["msg"]!="OK":
         return {"status":0,"message":resp["msg"]}
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+    try:
+        ssh.connect(hostname=resp["ip"],username=resp["username"],password=resp["password"])
+    except Exception as ex:
+        logger.error("While connecting to VM %s",ex)
     if app_type=="app":
         collection.find_one_and_update({"app": (username+"_"+app_name).lower()}, { '$set': {"detailed_status":"Connected to allocated VM"}})
     ftp_client=ssh.open_sftp()
@@ -248,7 +252,7 @@ def deploy_util(app_id,username,port=None,app_type='app'):
                 collection.insert_one(mydata)
         else:
             collection.find_one_and_update({"app": (username+"_"+app_name).lower()}, { '$set': {"node_id": result["runtime_id"], "app": (username+"_"+app_name).lower(), "deployed_by":username, "status": True,
-                    "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"]},
+                    "volume":result["vol"], "machine":{"ip":resp["ip"], "username":resp["username"],"password":resp["password"],"port":result["port"]},
                     "created":dt.now(),"updated":dt.now(), "detailed_status":"Running"}})
             # mydata = 
         # collection.insert_one(mydata)
