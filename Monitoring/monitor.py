@@ -18,14 +18,9 @@ load_dotenv()  # take environment variables from .env.
 
 threshold = 10
 
-# kafkaPort1 = "9092"
-# kafkaPort = "9092"
-kafkaPort1 = os.getenv("kafkaPort")
-kafkaPort = os.getenv("kafkaPort")
+# kafkaPort = os.getenv("kafkaPort")
 
 # kafkaAddress = os.getenv("kafkaAddress") + ":{}".format(kafkaPort)  # ProducerIP : ProducerPort
-#
-# kafkaAddress1 = os.getenv("kafkaAddress") + ":{}".format(kafkaPort1)  # ProducerIP : ProducerPort
 
 kafkaAddress = os.getenv("KAFKA_URI")
 
@@ -72,7 +67,6 @@ def fetch_status():
         module_dict[message['moduleName']] = message['currentTime']
 
 
-# def node_deployer():
 
 
 def fetch_module_status():
@@ -80,13 +74,8 @@ def fetch_module_status():
     t.daemon = True
     t.start()
 
-    # for message in monitor():
-    #     module_dict[message['moduleName']] = message['currentTime']
-
     # print("Inside fetch_module_status")
     down = []
-    # current_time = datetime.datetime.utcnow()
-    # print(module_dict)
 
     while True:
         if len(module_dict) > 0:
@@ -117,8 +106,6 @@ def fetch_module_status():
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
                 json_data = {'status': module_status[module]}
                 logger.info("JSON TYPE : " + str(json_data))
-                # json_data = json.dumps(json_data)
-                # json_data = json.loads(json_data)
 
                 mongo_utility.update_one_field(module, module_status[module], database_name, collection_name)
 
@@ -127,7 +114,6 @@ def fetch_module_status():
 
 def node_monitoring():
     try:
-        # print("Hello")
         send_logs_thread = threading.Thread(target=fetch_module_status)
         send_logs_thread.daemon = True
         send_logs_thread.start()
