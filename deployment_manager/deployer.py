@@ -79,8 +79,8 @@ if __name__ == '__main__':
     # t.daemon = True
     # t.start()
 
-    # t2 = threading.Thread(target=scheduler_consumer, args=())
-    # t2.daemon = True
-    # t2.start()
+    t2 = threading.Thread(target=req_handler, args=())
+    t2.daemon = True
+    t2.start()
     # req_handler()
     scheduler_consumer()

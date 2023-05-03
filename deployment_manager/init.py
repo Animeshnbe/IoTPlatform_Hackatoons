@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(description='Sets up deployment')
 parser.add_argument('--app_type', type=str, default='app', help='App or service')
 parser.add_argument('--kafka_broker', type=str, required=True, help='broker uri')
 parser.add_argument('--kafka_rest', type=str, default='192.168.137.51:18082', help='rest api uri')
+parser.add_argument('--db', type=str, default='192.168.137.51:27016', help='mongo db uri')
 parser.add_argument('--name', type=str, required=True, help='app or service name')
 parser.add_argument('--user', type=str, required=True, help='who is deploying')
 parser.add_argument('--port', type=str, default='', help='Port to expose')
@@ -23,13 +24,19 @@ args = parser.parse_args()
 # config.read('.env')
 # configs = config['local']
 
+import pymongo
+ip,port = args.db.split(":")
+client = pymongo.MongoClient(ip,int(port))
+collection = client['IAS_Global']['vmconfig']
+
 def generate_docker(fp,service, sensor_topic, controller_topic, username):
     df = open(fp+'/scripts/Dockerfile', 'w')
     
     dependency = service['dependencies']   #other service topics
 
     for ser in dependency['platform']:
-        requests.post("deployment_mgr:8888/deploy",json={"appname":ser,"user":username,"app_type":"service"})
+        dep = collection.find_one({"name":"deployer"})
+        requests.post(dep["ip"]+":"+str(dep["port"])+"/deploy",json={"appname":ser,"user":username,"app_type":"service"})
         # pass
 
     for ser in dependency['bundle']:
@@ -169,7 +176,7 @@ def fetch_n_map_sensors2(sensors,controllers):
 
     return ans
 
-def check_request(fp, worklist, consumer_group, base_uri, notif=None, name="test"):  
+def check_request(fp, worklist, consumer_group, base_uri, kafka, notif=None, name="test"):  
     # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",worklist)
     res = requests.get(f"http://{base_uri}/topics").json()
 
@@ -180,6 +187,8 @@ def check_request(fp, worklist, consumer_group, base_uri, notif=None, name="test
                 return 0
             
     print("work===========", str(worklist))
+    act = collection.find_one({"name":"action_manager"})
+    am_uri = act["ip"]+":"+str(act["port"])
     with open(fp+"/scripts/data_adapter.py","w") as f:
         f.write(f'''
 import requests
@@ -230,11 +239,11 @@ def attach_sensors(names, receiver="wolf.blunt0714@gmail.com"):
             if "sms" in notif:
                 if name in notif["sms"]:
                     if notif["sms"][name][1]<value or notif["sms"][name][0]>value:
-                        requests.post("http://10.2.130.191:9825/messageAPI", json={{"number":notif["mobile"], "message":name+" has got anomalous value "+str(value)}})
+                        requests.post("http://{am_uri}/messageAPI", json={{"number":notif["mobile"], "message":name+" has got anomalous value "+str(value)}})
             if "email" in notif:
                 if name in notif["email"]:
                     if notif["email"][name][1]<value or notif["email"][name][0]>value:
-                        requests.post("http://10.2.130.191:9825/emailAPI", json={{"email":receiver, "subject":"Platform Alerts", "text":name+" has got anomalous value "+str(value)}})
+                        requests.post("http://{am_uri}/emailAPI", json={{"email":receiver, "subject":"Platform Alerts", "text":name+" has got anomalous value "+str(value)}})
             yield res
 
 def send_controller(controller_name,action,instance=None):
@@ -244,6 +253,24 @@ def send_controller(controller_name,action,instance=None):
     else:
         requests.post("http://10.2.129.21:9825/actionManagerAPI", json={{"user_id":"{consumer_group.split('_')[0]}","new_value":action,"device_id":devices["controllers"][controller_name][instance]}})
 
+def send_notification(device_name, msg, notif_type):
+    if notif_type:
+        requests.post("http://{am_uri}/messageAPI", json={{"number":notif["mobile"], "message":msg}})
+    else:
+        requests.post("http://{am_uri}/emailAPI", json={{"email":receiver, "subject":"Platform Alerts", "text":msg}})
+
+if __name__=="__main__":
+    producer = KafkaProducer(
+        bootstrap_servers=["{kafka}"],
+        value_serializer=lambda m: json.dumps(m).encode('ascii'))
+    while True:
+        curr_time = str(datetime.datetime.utcnow())
+        message = {{
+            'moduleName': "app_{consumer_group}",
+            'currentTime': curr_time
+        }}
+        producer.send('module_heart_rate', key=None,value=message)
+        sleep(5)
         ''')
     
 def deploy_util(app_name,username):
@@ -307,7 +334,7 @@ def deploy_util(app_name,username):
         
         print("worklist>> ",worklist)
         # build adapter
-        check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest,modes)
+        check_request(file_path,device_instance,username+"_"+app_name,args.kafka_rest,args.kafka_broker,modes)
 
         # 4 build and deploy
         print('docker build -t '+app_name+':'+ver+' ' +file_path+src)
