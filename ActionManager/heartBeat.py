@@ -13,8 +13,10 @@ load_dotenv()
 #                          value_serializer=lambda v: json.dumps(v).encode('utf-8')
 #                          )
 
-kafka_ip = os.getenv("kafka_ip")
-kafka_port = os.getenv("kafka_port")
+kafka_add= os.getenv("KAFKA_URI")
+kafka_list = kafka_add.split(':')
+kafka_port = kafka_list[1]
+kafka_ip = kafka_list[0]
 monitor_heart_rate_topic = os.getenv("monitor_heart_rate_topic")
 
 
