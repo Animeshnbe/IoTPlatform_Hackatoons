@@ -79,7 +79,7 @@ def generate_docker(fp,service, sensor_topic, controller_topic, username):
     # df.write('EXPOSE '+str(service["port"])+'/tcp\n')
 
     # keyword_args = (' ').join(dependency)
-    runcmd = 'ENTRYPOINT python3 -u /home/' + service['main_file'] + ' ' + (' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) # + " " + keyword_args
+    runcmd = 'ENTRYPOINT python3 -u /home/' + service['main_file']+' data_adapter.py'   #(' ').join(sensor_topic) + ' ' + (' ').join(controller_topic) # + " " + keyword_args
     df.write(runcmd.rstrip())
     df.close()
 
