@@ -7,10 +7,11 @@ from pymongo.errors import DuplicateKeyError as MongoDuplicateKeyError
 
 
 class MongoUtility():
-    def __init__(self, _mongo_host, _mongo_port):
+    def __init__(self, mongo_uri):
         super().__init__()
         try:
-            self.__mongo_OBJ__ = MongoClient(host=_mongo_host, port=_mongo_port)
+            # self.__mongo_OBJ__ = MongoClient(host=_mongo_host, port=_mongo_port)
+            self.__mongo_OBJ__ = MongoClient(mongo_uri)
             print("Mongo connection established")
         except Exception as e:
             print("Error in establishing connection: " + str(e))

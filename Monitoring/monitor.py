@@ -10,6 +10,7 @@ import datetime
 from communication_api import monitor
 from loggingUtility import logger_func
 from sshUtility import SSHUtil
+from kafkautilities import kafka_consume, kafka_produce
 
 logger = logger_func()
 
@@ -22,20 +23,47 @@ threshold = 10
 kafkaPort1 = os.getenv("kafkaPort")
 kafkaPort = os.getenv("kafkaPort")
 
-kafkaAddress = os.getenv("kafkaAddress") + ":{}".format(kafkaPort)  # ProducerIP : ProducerPort
+# kafkaAddress = os.getenv("kafkaAddress") + ":{}".format(kafkaPort)  # ProducerIP : ProducerPort
+#
+# kafkaAddress1 = os.getenv("kafkaAddress") + ":{}".format(kafkaPort1)  # ProducerIP : ProducerPort
 
-kafkaAddress1 = os.getenv("kafkaAddress") + ":{}".format(kafkaPort1)  # ProducerIP : ProducerPort
+kafkaAddress = os.getenv("KAFKA_URI")
 
 collection_name = os.getenv("collection_name")
 database_name = os.getenv("database_name")
 
-mongo_port = int(os.getenv("mongo_port"))
-mongo_host = os.getenv("mongo_host")
+fault_tolerance_topic = os.getenv("fault_tolerance_topic")
+
+# mongo_port = int(os.getenv("mongo_port"))
+# mongo_host = os.getenv("mongo_host")
+
+mongo_uri = os.getenv("MONGO_DB")
 
 module_dict = dict()
 module_status = dict()
 
-mongo_utility = MongoUtility(_mongo_port=mongo_port, _mongo_host=mongo_host)
+mongo_utility = MongoUtility(mongo_uri)
+
+
+def kafka_fault_tolerance(module_name):
+    try:
+        module_json = dict(name=module_name)
+        record = mongo_utility.find_json(module_json, database_name, collection_name)
+        print("record : ", record)
+        module_port = record[0].get("port", "")
+        message = {
+            'module_name': module_name,
+            'port': int(module_port)
+        }
+        print("Kafka Fault Tolerance Message : ", message)
+        logger.debug("Kafka Fault Tolerance Message : " + str(message))
+        print("Topic : ", fault_tolerance_topic)
+        kafka_produce(kafkaAddress, fault_tolerance_topic, message)
+        print("Kafka Fault Tolerance Topic created")
+        logger.info("Kafka Fault Tolerance Topic created")
+    except Exception as e:
+        print("Error : ", e)
+        logger.error(e)
 
 
 def fetch_status():
@@ -74,19 +102,21 @@ def fetch_module_status():
                     if module in down:
                         continue
                     else:
-                        module_status[module] = False
-                        obj = SSHUtil()
+                        module_status[module] = 0
+                        kafka_fault_tolerance(module)
+                        # obj = SSHUtil()
                         # a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
+
                         down.append(module)
                 else:
                     if module in down:
                         down.remove(module)
 
                     # print(module + " up")
-                    module_status[module] = True
+                    module_status[module] = 1
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
                 json_data = {'status': module_status[module]}
-                logger.info("JSON TYPE : "+str(json_data))
+                logger.info("JSON TYPE : " + str(json_data))
                 # json_data = json.dumps(json_data)
                 # json_data = json.loads(json_data)
 

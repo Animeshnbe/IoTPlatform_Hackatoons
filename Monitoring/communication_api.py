@@ -9,9 +9,12 @@ load_dotenv()  # take environment variables from .env.
 logger = logger_func()
 
 # kafkaIPPort = '52.15.89.83:9092'
-kafkaPort = os.getenv("kafkaPort")
-kafkaIP = os.getenv("kafkaAddress")
-kafka_ip_port = kafkaIP + ":" + kafkaPort
+# kafkaPort = os.getenv("kafkaPort")
+# kafkaIP = os.getenv("kafkaAddress")
+
+
+# kafka_ip_port = kafkaIP + ":" + kafkaPort
+kafka_ip_port = os.getenv("KAFKA_URI")
 monitor_heart_rate_topic = os.getenv("monitor_heart_rate_topic")
 
 
@@ -30,4 +33,3 @@ def monitor():
     for message in consumer:
         print(message.value)
         yield message.value
-    print("outside")
