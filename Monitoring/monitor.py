@@ -17,7 +17,7 @@ logger = init_logging()
 
 load_dotenv()  # take environment variables from .env.
 
-threshold = 10
+threshold = 22
 
 # kafkaPort = os.getenv("kafkaPort")
 
