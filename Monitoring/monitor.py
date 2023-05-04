@@ -8,11 +8,12 @@ from dotenv import load_dotenv
 import os
 import datetime
 from communication_api import monitor
-from loggingUtility import logger_func
+from loggingUtility import logger_func, init_logging
 from sshUtility import SSHUtil
 from kafkautilities import kafka_consume, kafka_produce
 
-logger = logger_func()
+# logger = logger_func()
+logger = init_logging()
 
 load_dotenv()  # take environment variables from .env.
 

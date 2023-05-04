@@ -1,6 +1,6 @@
-FROM alpine:latest
+FROM python:3.9-alpine
 
-RUN apk update && apk add python3 py3-pip
+RUN apk update && apk add --no-cache curl unzip
 # COPY requirements.txt ./ActionManager/requirements.txt
 ADD . ./Monitoring
 RUN cd Monitoring && pip install -r /Monitoring/requirements.txt
