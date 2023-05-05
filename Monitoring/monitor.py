@@ -118,7 +118,7 @@ def fetch_module_status():
                     if module in down:
                         continue
                     else:
-                        module_status[module] = 0
+                        module_status[module] = False
                         if module.startswith("app"):
                             words = module.split("_")
                             app_name = words[-2]
@@ -134,7 +134,7 @@ def fetch_module_status():
                         down.remove(module)
 
                     # print(module + " up")
-                    module_status[module] = 1
+                    module_status[module] = True
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
 
                 if module.startswith("app"):
