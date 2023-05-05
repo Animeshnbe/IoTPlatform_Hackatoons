@@ -70,7 +70,7 @@ def send_sms(to_number, message):
         auth_token = os.getenv("auth_token")
         from_number = os.getenv("from_number")
         client = Client(account_sid, auth_token)
-        message = client.messages.create(body=message, from_=from_number, to=to_number)
+        message = client.messages.create(body=message, from_=from_number, to=int(to_number))
         print(message.sid)
         return "Success"
     except Exception as exception:
