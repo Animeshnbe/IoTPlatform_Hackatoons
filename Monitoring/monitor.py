@@ -1,4 +1,5 @@
 from kafka import KafkaConsumer
+import requests
 import json
 import time
 from mongo_utility import MongoUtility
@@ -17,7 +18,7 @@ logger = init_logging()
 
 load_dotenv()  # take environment variables from .env.
 
-threshold = 22
+threshold = 12
 
 # kafkaPort = os.getenv("kafkaPort")
 
@@ -27,6 +28,7 @@ kafkaAddress = os.getenv("KAFKA_URI")
 
 collection_name = os.getenv("collection_name")
 database_name = os.getenv("database_name")
+app_runtimes_collection_name = os.getenv("app_runtimes_collection_name")
 
 fault_tolerance_topic = os.getenv("fault_tolerance_topic")
 
@@ -62,12 +64,36 @@ def kafka_fault_tolerance(module_name):
         logger.error(e)
 
 
+def sample_app_request(app_name, app_number):
+    try:
+        module_json = dict(name="deployer")
+        record = mongo_utility.find_json(module_json, database_name, collection_name)
+        print("Mongo Record : ", record)
+        app_ip = record[0].get("ip", "")
+        app_port = record[0].get("port", "")
+        url = "http://{}:{}/restart_service".format(app_ip, app_port)
+        print("URL : ", url)
+        # http: // < deployer_ip >: 8888 / restart_service
+        data = {
+            "name": app_name+"_app",
+            "username": app_number,
+            "type": "app_runtimes"
+        }
+
+        print("data : ", data)
+        response = requests.post(url, json=data)
+        print("APP POST Response : ", response)
+        logger.debug("APP POST Response : " + str(response))
+
+    except Exception as e:
+        print("Error : ", e)
+        logger.error(e)
+
+
 def fetch_status():
     for message in monitor():
         # logger.info("Message : " + str(message))
         module_dict[message['moduleName']] = message['currentTime']
-
-
 
 
 def fetch_module_status():
@@ -93,7 +119,12 @@ def fetch_module_status():
                         continue
                     else:
                         module_status[module] = 0
-                        kafka_fault_tolerance(module)
+                        if module.startswith("app"):
+                            words = module.split("_")
+                            app_name = words[-2]
+                            sample_app_request(app_name, words[1])
+                        else:
+                            kafka_fault_tolerance(module)
                         # obj = SSHUtil()
                         # a, b = obj.execute_command(["python3 hello.py"], "10.2.136.254", "aman_2110")
 
@@ -105,10 +136,20 @@ def fetch_module_status():
                     # print(module + " up")
                     module_status[module] = 1
                 # if mongo_utility.check_document(database_name, json_data, collection_name):
-                json_data = {'status': module_status[module]}
-                logger.info("JSON TYPE : " + str(json_data))
 
-                mongo_utility.update_one_field(module, module_status[module], database_name, collection_name)
+                if module.startswith("app"):
+                    json_data = {'status': module_status[module]}
+                    logger.info("JSON TYPE : " + str(json_data))
+                    words1 = module.split("_")
+                    sample_app_name = words1[1] + "_" + words1[-2] + "_" + words1[-1]
+                    print("Sample App Name : ", sample_app_name)
+                    mongo_utility.update_app_one_field(sample_app_name, module_status[module], database_name,
+                                                       app_runtimes_collection_name)
+                else:
+                    json_data = {'status': module_status[module]}
+                    logger.info("JSON TYPE : " + str(json_data))
+
+                    mongo_utility.update_one_field(module, module_status[module], database_name, collection_name)
 
         time.sleep(5)
 
