@@ -1,1 +1,15 @@
 .env
+scraps/
+data/
+uploads/
+*_vol/
+*.zip
+*.log*
+*.ini
+*.pyc
+__pycache__/
+deployer/
+node_manager/*.json
+Authentication/
+workflow_manager/scan_data.py
+docker-compose.yml

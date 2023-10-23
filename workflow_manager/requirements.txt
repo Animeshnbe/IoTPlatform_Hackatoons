@@ -1,0 +1,7 @@
+Flask
+paramiko
+prometheus-flask-exporter
+PyJWT
+pymongo
+python-dotenv
+pyyaml
